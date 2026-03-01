@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Box,
     Card,
@@ -16,12 +17,13 @@ import Link from 'next/link';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 export default function RegisterPage() {
+    const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
+    const [serverError, setServerError] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const validate = () => {
@@ -40,37 +42,31 @@ export default function RegisterPage() {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
+        setServerError('');
 
-        // TODO: API hívás a 3. mérföldkőnél
-        console.log('Regisztráció:', { name, email, password });
-        await new Promise((r) => setTimeout(r, 1000));
-        setSuccess(true);
-        setLoading(false);
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setServerError(data.error || 'Ismeretlen hiba történt');
+                setLoading(false);
+                return;
+            }
+
+            // Sikeres regisztráció → átirányítás a login oldalra
+            router.push('/login?registered=true');
+
+        } catch {
+            setServerError('Hálózati hiba, próbáld újra később');
+            setLoading(false);
+        }
     };
-
-    if (success) {
-        return (
-            <Card>
-                <CardContent sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
-                    <Typography variant="h5" fontWeight={700} gutterBottom>
-                        Sikeres regisztráció! 🎉
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        A fiókod létrejött. Most már bejelentkezhetsz.
-                    </Typography>
-                    <Button
-                        component={Link}
-                        href="/login"
-                        variant="contained"
-                        fullWidth
-                        sx={{ minHeight: 44 }}
-                    >
-                        Bejelentkezés
-                    </Button>
-                </CardContent>
-            </Card>
-        );
-    }
 
     return (
         <Card>
@@ -81,6 +77,12 @@ export default function RegisterPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                     Hozd létre a fiókodat és kezdd el követni a táplálkozásodat.
                 </Typography>
+
+                {serverError && (
+                    <Alert severity="error" sx={{ mb: 2 }} role="alert">
+                        {serverError}
+                    </Alert>
+                )}
 
                 <Box component="form" onSubmit={handleSubmit} noValidate>
                     <Stack spacing={2}>

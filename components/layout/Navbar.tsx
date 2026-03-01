@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
     AppBar,
@@ -17,6 +18,7 @@ import {
     Menu,
     MenuItem,
     Divider,
+    Skeleton,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -33,17 +35,11 @@ const navItems = [
     { label: 'Receptek', href: '/recipes', icon: <BookmarkIcon /> },
 ];
 
-// TODO: valódi user adatok NextAuth session-ből
-const mockUser = {
-    name: 'Teszt Felhasználó',
-    email: 'teszt@example.com',
-    role: 'admin',
-};
-
 export default function Navbar() {
     const pathname = usePathname();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const { data: session, status } = useSession();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const today = new Date().toISOString().split('T')[0];
@@ -63,6 +59,15 @@ export default function Navbar() {
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
+
+    const handleSignOut = async () => {
+        handleMenuClose();
+        await signOut({ callbackUrl: '/login' });
+    };
+
+    const isAdmin = session?.user?.role === 'admin';
+    const userName = session?.user?.name || session?.user?.email || '';
+    const userInitial = userName.charAt(0).toUpperCase();
 
     // ── Mobil: alsó tab bar ───────────────────────────────────────
     if (isMobile) {
@@ -93,9 +98,7 @@ export default function Navbar() {
                             aria-label={item.label}
                             sx={{
                                 minWidth: 44,
-                                '&.Mui-selected': {
-                                    color: 'primary.main',
-                                },
+                                '&.Mui-selected': { color: 'primary.main' },
                             }}
                         />
                     ))}
@@ -181,8 +184,8 @@ export default function Navbar() {
                         })}
                     </Box>
 
-                    {/* Admin link (csak adminoknak) */}
-                    {mockUser.role === 'admin' && (
+                    {/* Admin link */}
+                    {isAdmin && (
                         <IconButton
                             component={Link}
                             href="/admin/foods"
@@ -193,25 +196,29 @@ export default function Navbar() {
                         </IconButton>
                     )}
 
-                    {/* Avatar + dropdown menü */}
-                    <IconButton
-                        onClick={handleAvatarClick}
-                        aria-label="Felhasználói menü megnyitása"
-                        aria-controls="user-menu"
-                        aria-haspopup="true"
-                        aria-expanded={Boolean(anchorEl)}
-                    >
-                        <Avatar
-                            sx={{
-                                width: 36,
-                                height: 36,
-                                bgcolor: 'primary.main',
-                                fontSize: '0.875rem',
-                            }}
+                    {/* Avatar / loading skeleton */}
+                    {status === 'loading' ? (
+                        <Skeleton variant="circular" width={36} height={36} />
+                    ) : (
+                        <IconButton
+                            onClick={handleAvatarClick}
+                            aria-label="Felhasználói menü megnyitása"
+                            aria-controls="user-menu"
+                            aria-haspopup="true"
+                            aria-expanded={Boolean(anchorEl)}
                         >
-                            {mockUser.name.charAt(0)}
-                        </Avatar>
-                    </IconButton>
+                            <Avatar
+                                sx={{
+                                    width: 36,
+                                    height: 36,
+                                    bgcolor: 'primary.main',
+                                    fontSize: '0.875rem',
+                                }}
+                            >
+                                {userInitial}
+                            </Avatar>
+                        </IconButton>
+                    )}
 
                     <Menu
                         id="user-menu"
@@ -224,10 +231,10 @@ export default function Navbar() {
                         <MenuItem disabled>
                             <Box>
                                 <Typography variant="body2" fontWeight={600}>
-                                    {mockUser.name}
+                                    {session?.user?.name || 'Felhasználó'}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                    {mockUser.email}
+                                    {session?.user?.email}
                                 </Typography>
                             </Box>
                         </MenuItem>
@@ -242,7 +249,7 @@ export default function Navbar() {
                             Profil
                         </MenuItem>
                         <MenuItem
-                            onClick={handleMenuClose}
+                            onClick={handleSignOut}
                             aria-label="Kijelentkezés"
                             sx={{ color: 'error.main' }}
                         >
@@ -252,8 +259,6 @@ export default function Navbar() {
                     </Menu>
                 </Toolbar>
             </AppBar>
-
-            {/* Toolbar spacer — hogy a tartalom ne csússzon a fixed AppBar alá */}
             <Toolbar />
         </>
     );
