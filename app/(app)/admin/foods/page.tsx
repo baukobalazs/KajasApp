@@ -24,43 +24,30 @@ import {
     Chip,
     Tooltip,
     TablePagination,
+    Alert,
+    Snackbar,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-
-interface Food {
-    id: string;
-    name: string;
-    caloriesPer100g: number;
-    proteinPer100g: number;
-    carbsPer100g: number;
-    fatPer100g: number;
-    source: 'manual' | 'openfoodfacts';
-}
-
-// TODO: valódi adatok a 2. mérföldkőnél
-const mockFoods: Food[] = [
-    { id: '1', name: 'Csirkemell', caloriesPer100g: 165, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 3.6, source: 'manual' },
-    { id: '2', name: 'Zabpehely', caloriesPer100g: 370, proteinPer100g: 13, carbsPer100g: 60, fatPer100g: 7, source: 'openfoodfacts' },
-    { id: '3', name: 'Tojás', caloriesPer100g: 155, proteinPer100g: 13, carbsPer100g: 1.1, fatPer100g: 11, source: 'manual' },
-    { id: '4', name: 'Barna rizs', caloriesPer100g: 360, proteinPer100g: 7.5, carbsPer100g: 76, fatPer100g: 2.7, source: 'openfoodfacts' },
-    { id: '5', name: 'Lazac', caloriesPer100g: 208, proteinPer100g: 20, carbsPer100g: 0, fatPer100g: 13, source: 'manual' },
-    { id: '6', name: 'Görög joghurt', caloriesPer100g: 97, proteinPer100g: 10, carbsPer100g: 3.6, fatPer100g: 5, source: 'openfoodfacts' },
-];
+import { useFoods, useDeleteFood } from '@/lib/hooks/useApi';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g';
 type SortOrder = 'asc' | 'desc';
 
 export default function AdminFoodsPage() {
-    const [foods, setFoods] = useState<Food[]>(mockFoods);
+    const { data: foods, isLoading, error, mutate } = useFoods();
+    const { trigger: deleteFood } = useDeleteFood();
+
     const [search, setSearch] = useState('');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [page, setPage] = useState(0);
-    const rowsPerPage = 5;
+    const [toast, setToast] = useState('');
+    const rowsPerPage = 10;
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -71,24 +58,31 @@ export default function AdminFoodsPage() {
         }
     };
 
-    const filtered = foods
-        .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
-        .sort((a, b) => {
+    const foodToDelete = foods?.find((f: any) => f.id === deleteId);
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteId) return;
+        try {
+            await deleteFood({ id: deleteId });
+            await mutate();
+            setDeleteId(null);
+            setToast('Élelmiszer sikeresen törölve');
+        } catch (err: any) {
+            setToast(err.message || 'Hiba történt a törlés során');
+        }
+    };
+
+    const filtered = (foods || [])
+        .filter((f: any) => f.name.toLowerCase().includes(search.toLowerCase()))
+        .sort((a: any, b: any) => {
             const mult = sortOrder === 'asc' ? 1 : -1;
             if (sortField === 'name') return mult * a.name.localeCompare(b.name, 'hu');
-            return mult * (a[sortField] - b[sortField]);
+            return mult * (Number(a[sortField]) - Number(b[sortField]));
         });
 
     const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-    const foodToDelete = foods.find((f) => f.id === deleteId);
-
-    const handleDeleteConfirm = () => {
-        if (deleteId) {
-            setFoods((prev) => prev.filter((f) => f.id !== deleteId));
-            setDeleteId(null);
-        }
-    };
+    if (isLoading) return <SkeletonLoader type="list" />;
 
     return (
         <Box component="section" aria-labelledby="admin-title">
@@ -99,7 +93,7 @@ export default function AdminFoodsPage() {
                         Élelmiszer adatbázis
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Admin panel — {foods.length} élelmiszer
+                        Admin panel — {foods?.length || 0} élelmiszer
                     </Typography>
                 </Box>
                 <Button
@@ -112,6 +106,12 @@ export default function AdminFoodsPage() {
                     Új élelmiszer
                 </Button>
             </Box>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} role="alert">
+                    Hiba történt az élelmiszerek betöltésekor.
+                </Alert>
+            )}
 
             {/* Kereső */}
             <TextField
@@ -176,18 +176,18 @@ export default function AdminFoodsPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            paginated.map((food) => (
+                            paginated.map((food: any) => (
                                 <TableRow key={food.id} hover>
                                     <TableCell>{food.name}</TableCell>
-                                    <TableCell align="right">{food.caloriesPer100g} kcal</TableCell>
-                                    <TableCell align="right">{food.proteinPer100g}g</TableCell>
-                                    <TableCell align="right">{food.carbsPer100g}g</TableCell>
-                                    <TableCell align="right">{food.fatPer100g}g</TableCell>
+                                    <TableCell align="right">{Number(food.caloriesPer100g).toFixed(0)} kcal</TableCell>
+                                    <TableCell align="right">{Number(food.proteinPer100g || 0).toFixed(1)}g</TableCell>
+                                    <TableCell align="right">{Number(food.carbsPer100g || 0).toFixed(1)}g</TableCell>
+                                    <TableCell align="right">{Number(food.fatPer100g || 0).toFixed(1)}g</TableCell>
                                     <TableCell align="center">
                                         <Chip
-                                            label={food.source === 'manual' ? 'Manuális' : 'OpenFoodFacts'}
+                                            label={food.openfoodfactsId ? 'OpenFoodFacts' : 'Manuális'}
                                             size="small"
-                                            color={food.source === 'manual' ? 'primary' : 'default'}
+                                            color={food.openfoodfactsId ? 'default' : 'primary'}
                                             variant="outlined"
                                         />
                                     </TableCell>
@@ -225,7 +225,7 @@ export default function AdminFoodsPage() {
                     count={filtered.length}
                     page={page}
                     rowsPerPage={rowsPerPage}
-                    rowsPerPageOptions={[5]}
+                    rowsPerPageOptions={[10]}
                     onPageChange={(_, newPage) => setPage(newPage)}
                     labelDisplayedRows={({ from, to, count }) => `${from}–${to} / ${count}`}
                 />
@@ -252,6 +252,15 @@ export default function AdminFoodsPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Toast */}
+            <Snackbar
+                open={Boolean(toast)}
+                autoHideDuration={3000}
+                onClose={() => setToast('')}
+                message={toast}
+                aria-live="polite"
+            />
         </Box>
     );
 }
