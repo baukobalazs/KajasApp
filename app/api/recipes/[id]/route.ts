@@ -15,13 +15,14 @@ const updateRecipeSchema = z.object({
     })).optional(),
 });
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
 
         const recipe = await db.query.recipes.findFirst({
-            where: eq(recipes.id, params.id),
+            where: eq(recipes.id, id),
             with: { ingredients: { with: { food: true } } },
         });
 
@@ -35,12 +36,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
 
-        const recipe = await db.query.recipes.findFirst({ where: eq(recipes.id, params.id) });
+        const recipe = await db.query.recipes.findFirst({ where: eq(recipes.id, id) });
         if (!recipe) return NextResponse.json({ error: 'Recept nem található' }, { status: 404 });
         if (recipe.userId !== session.user.id) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
 
@@ -52,14 +55,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             await db.update(recipes).set({
                 name: parsed.data.name || recipe.name,
                 description: parsed.data.description || recipe.description,
-            }).where(eq(recipes.id, params.id));
+            }).where(eq(recipes.id, id));
         }
 
         if (parsed.data.ingredients) {
-            await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, params.id));
+            await db.delete(recipeIngredients).where(eq(recipeIngredients.recipeId, id));
             await db.insert(recipeIngredients).values(
                 parsed.data.ingredients.map((i) => ({
-                    recipeId: params.id,
+                    recipeId: id,
                     foodId: i.foodId,
                     amountG: String(i.amountG),
                 }))
@@ -67,7 +70,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         }
 
         const updated = await db.query.recipes.findFirst({
-            where: eq(recipes.id, params.id),
+            where: eq(recipes.id, id),
             with: { ingredients: { with: { food: true } } },
         });
 
@@ -78,16 +81,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
 
-        const recipe = await db.query.recipes.findFirst({ where: eq(recipes.id, params.id) });
+        const recipe = await db.query.recipes.findFirst({ where: eq(recipes.id, id) });
         if (!recipe) return NextResponse.json({ error: 'Recept nem található' }, { status: 404 });
         if (recipe.userId !== session.user.id) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
 
-        await db.delete(recipes).where(eq(recipes.id, params.id));
+        await db.delete(recipes).where(eq(recipes.id, id));
 
         return NextResponse.json({ message: 'Sikeresen törölve' });
     } catch (error) {

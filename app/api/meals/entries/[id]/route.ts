@@ -8,8 +8,9 @@ import { authOptions } from '@/lib/auth';
 // PUT /api/meals/entries/[id] — gramm mennyiség módosítása
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
@@ -21,7 +22,7 @@ export async function PUT(
 
         // Ellenőrzés: a bejegyzés a bejelentkezett userhez tartozik-e
         const entry = await db.query.mealEntries.findFirst({
-            where: eq(mealEntries.id, params.id),
+            where: eq(mealEntries.id, id),
             with: { meal: true },
         });
 
@@ -33,7 +34,7 @@ export async function PUT(
         const [updated] = await db
             .update(mealEntries)
             .set({ amountG: String(amountG) })
-            .where(eq(mealEntries.id, params.id))
+            .where(eq(mealEntries.id, id))
             .returning();
 
         return NextResponse.json(updated);
@@ -46,14 +47,15 @@ export async function PUT(
 // DELETE /api/meals/entries/[id] — bejegyzés törlése
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
 
         const entry = await db.query.mealEntries.findFirst({
-            where: eq(mealEntries.id, params.id),
+            where: eq(mealEntries.id, id),
             with: { meal: true },
         });
 
@@ -62,7 +64,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 403 });
         }
 
-        await db.delete(mealEntries).where(eq(mealEntries.id, params.id));
+        await db.delete(mealEntries).where(eq(mealEntries.id, id));
 
         return NextResponse.json({ message: 'Sikeresen törölve' });
     } catch (error) {

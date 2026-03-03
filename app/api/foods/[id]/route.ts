@@ -17,8 +17,9 @@ const updateFoodSchema = z.object({
 // PUT /api/foods/[id] — élelmiszer szerkesztése (csak admin)
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
@@ -40,7 +41,7 @@ export async function PUT(
         const [updated] = await db
             .update(foods)
             .set(updateData)
-            .where(eq(foods.id, params.id))
+            .where(eq(foods.id, id))
             .returning();
 
         if (!updated) return NextResponse.json({ error: 'Élelmiszer nem található' }, { status: 404 });
@@ -55,8 +56,9 @@ export async function PUT(
 // DELETE /api/foods/[id] — élelmiszer törlése (csak admin)
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Nincs jogosultság' }, { status: 401 });
@@ -64,7 +66,7 @@ export async function DELETE(
 
         const [deleted] = await db
             .delete(foods)
-            .where(eq(foods.id, params.id))
+            .where(eq(foods.id, id))
             .returning();
 
         if (!deleted) return NextResponse.json({ error: 'Élelmiszer nem található' }, { status: 404 });
