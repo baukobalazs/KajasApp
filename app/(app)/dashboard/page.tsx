@@ -1,35 +1,84 @@
+'use client';
+
 import { Typography, Box, Grid } from '@mui/material';
+import { useSession } from 'next-auth/react';
 import MacroProgressCard from '@/components/dashboard/MacroProgressCard';
 import TodayMealsSummary from '@/components/dashboard/TodayMealsSummary';
-
-// TODO: valódi adatok a 2. mérföldkőnél (adatbázisból)
-const mockData = {
-    user: { name: 'Teszt Felhasználó' },
-    calories: { current: 1340, goal: 2000 },
-    macros: {
-        protein: { current: 87, goal: 150 },
-        carbs: { current: 162, goal: 200 },
-        fat: { current: 44, goal: 65 },
-    },
-    meals: [
-        { type: 'breakfast' as const, label: 'Reggeli', calories: 420, itemCount: 3 },
-        { type: 'lunch' as const, label: 'Ebéd', calories: 650, itemCount: 4 },
-        { type: 'snack' as const, label: 'Snack', calories: 270, itemCount: 2 },
-    ],
-};
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import { useMeals, useProfile } from '@/lib/hooks/useApi';
 
 export default function DashboardPage() {
+    const { data: session } = useSession();
     const today = new Date().toISOString().split('T')[0];
-    const { calories, macros, meals, user } = mockData;
-    const caloriePercentage = Math.min(Math.round((calories.current / calories.goal) * 100), 100);
-    const remaining = Math.max(calories.goal - calories.current, 0);
+
+    const { data: mealsData, isLoading: mealsLoading, error: mealsError } = useMeals(today);
+    const { data: profile, isLoading: profileLoading } = useProfile();
+
+    const isLoading = mealsLoading || profileLoading;
+
+    // Kalória és makró célok — profilból vagy alapértelmezett
+    const calorieGoal = profile?.dailyCalorieGoal || 2000;
+    const proteinGoal = profile?.proteinGoalG || 150;
+    const carbGoal = profile?.carbGoalG || 200;
+    const fatGoal = profile?.fatGoalG || 65;
+
+    // Napi összesítés számítása a meals adatokból
+    const totals = (mealsData || []).reduce(
+        (acc: { calories: number; protein: number; carbs: number; fat: number }, meal: any) => {
+            (meal.entries || []).forEach((entry: any) => {
+                if (entry.food) {
+                    const factor = Number(entry.amountG) / 100;
+                    acc.calories += Math.round(Number(entry.food.caloriesPer100g) * factor);
+                    acc.protein += Math.round(Number(entry.food.proteinPer100g) * factor);
+                    acc.carbs += Math.round(Number(entry.food.carbsPer100g) * factor);
+                    acc.fat += Math.round(Number(entry.food.fatPer100g) * factor);
+                }
+            });
+            return acc;
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+
+    // Mai étkezések összefoglalóhoz
+    const mealTypeLabels: Record<string, string> = {
+        breakfast: 'Reggeli',
+        lunch: 'Ebéd',
+        dinner: 'Vacsora',
+        snack: 'Snack',
+    };
+
+    const mealSummaries = (mealsData || []).map((meal: any) => {
+        const calories = (meal.entries || []).reduce((sum: number, entry: any) => {
+            if (!entry.food) return sum;
+            return sum + Math.round(Number(entry.food.caloriesPer100g) * Number(entry.amountG) / 100);
+        }, 0);
+        return {
+            type: meal.type,
+            label: mealTypeLabels[meal.type] || meal.type,
+            calories,
+            itemCount: meal.entries?.length || 0,
+        };
+    });
+
+    const caloriePercentage = Math.min(Math.round((totals.calories / calorieGoal) * 100), 100);
+    const remaining = Math.max(calorieGoal - totals.calories, 0);
+
+    if (isLoading) return <SkeletonLoader type="dashboard" />;
+
+    if (mealsError) {
+        return (
+            <Box sx={{ py: 4, textAlign: 'center', color: 'error.main' }} role="alert">
+                <Typography>Hiba történt az adatok betöltésekor. Próbáld újra!</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box component="section" aria-labelledby="dashboard-title">
             {/* Fejléc */}
             <Box sx={{ mb: 3 }}>
                 <Typography variant="h4" component="h1" id="dashboard-title" fontWeight={700}>
-                    Szia, {user.name}! 👋
+                    Szia, {session?.user?.name || 'Felhasználó'}! 👋
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
                     {new Date().toLocaleDateString('hu-HU', {
@@ -42,7 +91,7 @@ export default function DashboardPage() {
             </Box>
 
             <Grid container spacing={3}>
-                {/* Kalória összesítő — teljes sor */}
+                {/* Kalória összesítő */}
                 <Grid size={12}>
                     <Box
                         sx={{
@@ -59,14 +108,13 @@ export default function DashboardPage() {
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 2 }}>
                             <Typography variant="h3" fontWeight={700}>
-                                {calories.current}
+                                {totals.calories}
                             </Typography>
                             <Typography variant="h6" sx={{ opacity: 0.75 }}>
-                                / {calories.goal} kcal
+                                / {calorieGoal} kcal
                             </Typography>
                         </Box>
 
-                        {/* Progress bar */}
                         <Box
                             sx={{
                                 height: 12,
@@ -102,8 +150,8 @@ export default function DashboardPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <MacroProgressCard
                         label="Fehérje"
-                        current={macros.protein.current}
-                        goal={macros.protein.goal}
+                        current={totals.protein}
+                        goal={proteinGoal}
                         unit="g"
                         color="primary"
                     />
@@ -111,8 +159,8 @@ export default function DashboardPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <MacroProgressCard
                         label="Szénhidrát"
-                        current={macros.carbs.current}
-                        goal={macros.carbs.goal}
+                        current={totals.carbs}
+                        goal={carbGoal}
                         unit="g"
                         color="secondary"
                     />
@@ -120,8 +168,8 @@ export default function DashboardPage() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                     <MacroProgressCard
                         label="Zsír"
-                        current={macros.fat.current}
-                        goal={macros.fat.goal}
+                        current={totals.fat}
+                        goal={fatGoal}
                         unit="g"
                         color="warning"
                     />
@@ -129,7 +177,7 @@ export default function DashboardPage() {
 
                 {/* Mai étkezések */}
                 <Grid size={12}>
-                    <TodayMealsSummary meals={meals} date={today} />
+                    <TodayMealsSummary meals={mealSummaries} date={today} />
                 </Grid>
             </Grid>
         </Box>

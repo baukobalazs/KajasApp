@@ -8,33 +8,17 @@ import {
     IconButton,
     Button,
     Stack,
+    Alert,
+    Snackbar,
 } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import TodayIcon from '@mui/icons-material/Today';
-import MealSection, { MealEntry } from '@/components/meal/MealSection';
-
-// TODO: valódi adatok a 2. mérföldkőnél
-const mockEntries: MealEntry[] = [
-    {
-        id: '1',
-        name: 'Zabpehely',
-        amountG: 80,
-        caloriesPer100g: 370,
-        proteinPer100g: 13,
-        carbsPer100g: 60,
-        fatPer100g: 7,
-    },
-    {
-        id: '2',
-        name: 'Tej (1,5%)',
-        amountG: 200,
-        caloriesPer100g: 46,
-        proteinPer100g: 3.4,
-        carbsPer100g: 4.8,
-        fatPer100g: 1.5,
-    },
-];
+import { useMeals, useAddMealEntry, useDeleteMealEntry, useUpdateMealEntry } from '@/lib/hooks/useApi';
+import MealSection from '@/components/meal/MealSection';
+import FoodSearchDialog from '@/components/food/FoodSearchDialog';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import { MealEntry } from '@/components/meal/MealSection';
 
 const mealTypes = [
     { type: 'breakfast' as const, label: 'Reggeli' },
@@ -44,78 +28,98 @@ const mealTypes = [
 ];
 
 export default function LogPage() {
-    const params = useParams();
+    const params = useRouter();
+    const { date } = useParams<{ date: string }>();
     const router = useRouter();
-    const date = params.date as string;
 
-    const [entries, setEntries] = useState<Record<string, MealEntry[]>>({
-        breakfast: mockEntries,
-        lunch: [],
-        dinner: [],
-        snack: [],
+    const { data: mealsData, isLoading, error, mutate } = useMeals(date);
+    const { trigger: addEntry } = useAddMealEntry();
+    const { trigger: deleteEntry } = useDeleteMealEntry();
+    const { trigger: updateEntry } = useUpdateMealEntry();
+
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [activeMealType, setActiveMealType] = useState<string>('');
+    const [toast, setToast] = useState('');
+
+    const isToday = date === new Date().toISOString().split('T')[0];
+
+    const formattedDate = new Date(date).toLocaleDateString('hu-HU', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
-    // Dátum navigáció
     const navigateDate = (direction: 'prev' | 'next') => {
         const current = new Date(date);
         current.setDate(current.getDate() + (direction === 'next' ? 1 : -1));
         router.push(`/log/${current.toISOString().split('T')[0]}`);
     };
 
-    const isToday = date === new Date().toISOString().split('T')[0];
-
-    const formattedDate = new Date(date).toLocaleDateString('hu-HU', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-
-    // Handlers
     const handleAddFood = (mealType: string) => {
-        // TODO: FoodSearchDialog megnyitása a 2. mérföldkőnél
-        console.log('Étel hozzáadása:', mealType);
+        setActiveMealType(mealType);
+        setSearchOpen(true);
     };
 
-    const handleDeleteEntry = (mealType: string, id: string) => {
-        setEntries((prev) => ({
-            ...prev,
-            [mealType]: prev[mealType].filter((e) => e.id !== id),
+    const handleFoodSelect = async (food: any, amountG: number) => {
+        try {
+            await addEntry({
+                date,
+                type: activeMealType,
+                entry: { foodId: food.savedId, amountG },
+            });
+            await mutate();
+            setToast('Étel sikeresen hozzáadva');
+        } catch (err: any) {
+            setToast(err.message || 'Hiba történt');
+        }
+    };
+
+    const handleDeleteEntry = async (id: string) => {
+        try {
+            await deleteEntry({ id });
+            await mutate();
+        } catch (err: any) {
+            setToast(err.message || 'Hiba történt a törlés során');
+        }
+    };
+
+    const handleAmountChange = async (id: string, amountG: number) => {
+        try {
+            await updateEntry({ id, amountG });
+            await mutate();
+        } catch (err: any) {
+            setToast(err.message || 'Hiba történt');
+        }
+    };
+
+    // Meals adatok átalakítása MealSection számára
+    const getMealEntries = (type: string): MealEntry[] => {
+        const meal = (mealsData || []).find((m: any) => m.type === type);
+        if (!meal) return [];
+        return (meal.entries || []).map((entry: any) => ({
+            id: entry.id,
+            name: entry.food?.name || entry.recipe?.name || 'Ismeretlen',
+            amountG: Number(entry.amountG),
+            caloriesPer100g: Number(entry.food?.caloriesPer100g || 0),
+            proteinPer100g: Number(entry.food?.proteinPer100g || 0),
+            carbsPer100g: Number(entry.food?.carbsPer100g || 0),
+            fatPer100g: Number(entry.food?.fatPer100g || 0),
         }));
     };
 
-    const handleAmountChange = (mealType: string, id: string, amount: number) => {
-        setEntries((prev) => ({
-            ...prev,
-            [mealType]: prev[mealType].map((e) =>
-                e.id === id ? { ...e, amountG: amount } : e
-            ),
-        }));
-    };
+    const totalCalories = (mealsData || []).reduce((sum: number, meal: any) => {
+        return sum + (meal.entries || []).reduce((s: number, entry: any) => {
+            if (!entry.food) return s;
+            return s + Math.round(Number(entry.food.caloriesPer100g) * Number(entry.amountG) / 100);
+        }, 0);
+    }, 0);
 
-    const totalCalories = Object.values(entries)
-        .flat()
-        .reduce((sum, e) => sum + Math.round((e.caloriesPer100g * e.amountG) / 100), 0);
+    if (isLoading) return <SkeletonLoader type="list" />;
 
     return (
         <Box component="section" aria-labelledby="log-title">
             {/* Fejléc + dátum navigáció */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 3,
-                    flexWrap: 'wrap',
-                    gap: 1,
-                }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconButton
-                        onClick={() => navigateDate('prev')}
-                        aria-label="Előző nap"
-                        sx={{ minWidth: 44, minHeight: 44 }}
-                    >
+                    <IconButton onClick={() => navigateDate('prev')} aria-label="Előző nap" sx={{ minWidth: 44, minHeight: 44 }}>
                         <ArrowBackIosIcon fontSize="small" />
                     </IconButton>
 
@@ -124,9 +128,7 @@ export default function LogPage() {
                             {isToday ? 'Ma' : formattedDate}
                         </Typography>
                         {isToday && (
-                            <Typography variant="body2" color="text.secondary">
-                                {formattedDate}
-                            </Typography>
+                            <Typography variant="body2" color="text.secondary">{formattedDate}</Typography>
                         )}
                     </Box>
 
@@ -158,6 +160,13 @@ export default function LogPage() {
                 </Box>
             </Box>
 
+            {/* Hibakezelés */}
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }} role="alert">
+                    Hiba történt az étkezések betöltésekor.
+                </Alert>
+            )}
+
             {/* Étkezés szekciók */}
             <Stack spacing={2}>
                 {mealTypes.map(({ type, label }) => (
@@ -165,13 +174,30 @@ export default function LogPage() {
                         key={type}
                         type={type}
                         label={label}
-                        entries={entries[type]}
+                        entries={getMealEntries(type)}
                         onAddFood={handleAddFood}
-                        onDeleteEntry={(id) => handleDeleteEntry(type, id)}
-                        onAmountChange={(id, amount) => handleAmountChange(type, id, amount)}
+                        onDeleteEntry={handleDeleteEntry}
+                        onAmountChange={handleAmountChange}
                     />
                 ))}
             </Stack>
+
+            {/* Étel kereső dialógus */}
+            <FoodSearchDialog
+                open={searchOpen}
+                onClose={() => setSearchOpen(false)}
+                onSelect={handleFoodSelect}
+                title={`Étel hozzáadása — ${mealTypes.find(m => m.type === activeMealType)?.label || ''}`}
+            />
+
+            {/* Toast */}
+            <Snackbar
+                open={Boolean(toast)}
+                autoHideDuration={3000}
+                onClose={() => setToast('')}
+                message={toast}
+                aria-live="polite"
+            />
         </Box>
     );
 }

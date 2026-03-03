@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import {
     Box,
     Typography,
@@ -12,6 +13,7 @@ import {
     ToggleButton,
     ToggleButtonGroup,
     Divider,
+    Snackbar,
     Alert,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
@@ -19,22 +21,10 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import { useProfile, useUpdateProfile } from '@/lib/hooks/useApi';
 
 type Goal = 'loss' | 'maintain' | 'gain';
-
-// TODO: valódi adatok NextAuth session + adatbázisból
-const mockProfile = {
-    name: 'Teszt Felhasználó',
-    email: 'teszt@example.com',
-    heightCm: 178,
-    weightKg: 75,
-    age: 25,
-    goal: 'maintain' as Goal,
-    dailyCalorieGoal: 2000,
-    proteinGoalG: 150,
-    carbGoalG: 200,
-    fatGoalG: 65,
-};
 
 const goalOptions = [
     { value: 'loss', label: 'Fogyás', icon: <TrendingDownIcon /> },
@@ -43,36 +33,69 @@ const goalOptions = [
 ];
 
 export default function ProfilePage() {
-    const [name, setName] = useState(mockProfile.name);
-    const [heightCm, setHeightCm] = useState(mockProfile.heightCm);
-    const [weightKg, setWeightKg] = useState(mockProfile.weightKg);
-    const [age, setAge] = useState(mockProfile.age);
-    const [goal, setGoal] = useState<Goal>(mockProfile.goal);
-    const [dailyCalorieGoal, setDailyCalorieGoal] = useState(mockProfile.dailyCalorieGoal);
-    const [proteinGoalG, setProteinGoalG] = useState(mockProfile.proteinGoalG);
-    const [carbGoalG, setCarbGoalG] = useState(mockProfile.carbGoalG);
-    const [fatGoalG, setFatGoalG] = useState(mockProfile.fatGoalG);
-    const [saved, setSaved] = useState(false);
+    const { data: session } = useSession();
+    const { data: profile, isLoading, mutate } = useProfile();
+    const { trigger: updateProfile, isMutating } = useUpdateProfile();
+
+    const [name, setName] = useState('');
+    const [heightCm, setHeightCm] = useState(0);
+    const [weightKg, setWeightKg] = useState(0);
+    const [age, setAge] = useState(0);
+    const [goal, setGoal] = useState<Goal>('maintain');
+    const [dailyCalorieGoal, setDailyCalorieGoal] = useState(2000);
+    const [proteinGoalG, setProteinGoalG] = useState(150);
+    const [carbGoalG, setCarbGoalG] = useState(200);
+    const [fatGoalG, setFatGoalG] = useState(65);
+    const [toast, setToast] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Profil adatok betöltése a form mezőkbe
+    useEffect(() => {
+        if (profile) {
+            setHeightCm(profile.heightCm || 0);
+            setWeightKg(Number(profile.weightKg) || 0);
+            setAge(profile.age || 0);
+            setGoal(profile.goal || 'maintain');
+            setDailyCalorieGoal(profile.dailyCalorieGoal || 2000);
+            setProteinGoalG(profile.proteinGoalG || 150);
+            setCarbGoalG(profile.carbGoalG || 200);
+            setFatGoalG(profile.fatGoalG || 65);
+        }
+        if (session?.user?.name) setName(session.user.name);
+    }, [profile, session]);
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
         if (!name.trim()) newErrors.name = 'A név kötelező';
-        if (heightCm < 100 || heightCm > 250) newErrors.heightCm = '100–250 cm között legyen';
-        if (weightKg < 30 || weightKg > 300) newErrors.weightKg = '30–300 kg között legyen';
-        if (age < 10 || age > 120) newErrors.age = '10–120 között legyen';
+        if (heightCm && (heightCm < 100 || heightCm > 250)) newErrors.heightCm = '100–250 cm között legyen';
+        if (weightKg && (weightKg < 30 || weightKg > 300)) newErrors.weightKg = '30–300 kg között legyen';
+        if (age && (age < 10 || age > 120)) newErrors.age = '10–120 között legyen';
         if (dailyCalorieGoal < 500 || dailyCalorieGoal > 10000) newErrors.dailyCalorieGoal = '500–10000 kcal között legyen';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!validate()) return;
-        // TODO: API hívás a 2. mérföldkőnél
-        console.log('Profil mentése');
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            await updateProfile({
+                heightCm,
+                weightKg,
+                age,
+                goal,
+                dailyCalorieGoal,
+                proteinGoalG,
+                carbGoalG,
+                fatGoalG,
+            });
+            await mutate();
+            setToast({ message: 'Profil sikeresen mentve!', severity: 'success' });
+        } catch (err: any) {
+            setToast({ message: err.message || 'Hiba történt a mentés során', severity: 'error' });
+        }
     };
+
+    if (isLoading) return <SkeletonLoader type="form" />;
 
     return (
         <Box component="section" aria-labelledby="profile-title">
@@ -81,15 +104,9 @@ export default function ProfilePage() {
                     Profilom
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                    {mockProfile.email}
+                    {session?.user?.email}
                 </Typography>
             </Box>
-
-            {saved && (
-                <Alert severity="success" sx={{ mb: 3 }} role="status" aria-live="polite">
-                    Profil sikeresen mentve!
-                </Alert>
-            )}
 
             <Stack spacing={3}>
                 {/* Személyes adatok */}
@@ -97,11 +114,8 @@ export default function ProfilePage() {
                     <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             <FitnessCenterIcon color="primary" aria-hidden="true" />
-                            <Typography variant="h6" fontWeight={600}>
-                                Személyes adatok
-                            </Typography>
+                            <Typography variant="h6" fontWeight={600}>Személyes adatok</Typography>
                         </Box>
-
                         <Stack spacing={2}>
                             <TextField
                                 label="Név"
@@ -116,7 +130,7 @@ export default function ProfilePage() {
                                 <TextField
                                     label="Magasság (cm)"
                                     type="number"
-                                    value={heightCm}
+                                    value={heightCm || ''}
                                     onChange={(e) => setHeightCm(Number(e.target.value))}
                                     error={Boolean(errors.heightCm)}
                                     helperText={errors.heightCm}
@@ -126,7 +140,7 @@ export default function ProfilePage() {
                                 <TextField
                                     label="Testsúly (kg)"
                                     type="number"
-                                    value={weightKg}
+                                    value={weightKg || ''}
                                     onChange={(e) => setWeightKg(Number(e.target.value))}
                                     error={Boolean(errors.weightKg)}
                                     helperText={errors.weightKg}
@@ -136,11 +150,11 @@ export default function ProfilePage() {
                                 <TextField
                                     label="Kor"
                                     type="number"
-                                    value={age}
+                                    value={age || ''}
                                     onChange={(e) => setAge(Number(e.target.value))}
                                     error={Boolean(errors.age)}
                                     helperText={errors.age}
-                                    inputProps={{ min: 10, max: 120, 'aria-label': 'Kor' }}
+                                    inputProps={{ min: 10, max: 120 }}
                                     sx={{ flex: 1, minWidth: 140 }}
                                 />
                             </Box>
@@ -151,9 +165,7 @@ export default function ProfilePage() {
                 {/* Cél */}
                 <Card>
                     <CardContent>
-                        <Typography variant="h6" fontWeight={600} gutterBottom>
-                            Táplálkozási cél
-                        </Typography>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>Táplálkozási cél</Typography>
                         <ToggleButtonGroup
                             value={goal}
                             exclusive
@@ -167,22 +179,18 @@ export default function ProfilePage() {
                                     value={opt.value}
                                     aria-label={opt.label}
                                     sx={{
-                                        minHeight: 44,
-                                        px: 3,
-                                        gap: 1,
+                                        minHeight: 44, px: 3, gap: 1,
                                         borderRadius: '8px !important',
                                         border: '1px solid !important',
                                         borderColor: 'divider !important',
                                         '&.Mui-selected': {
-                                            bgcolor: 'primary.main',
-                                            color: 'white',
+                                            bgcolor: 'primary.main', color: 'white',
                                             borderColor: 'primary.main !important',
                                             '&:hover': { bgcolor: 'primary.dark' },
                                         },
                                     }}
                                 >
-                                    {opt.icon}
-                                    {opt.label}
+                                    {opt.icon}{opt.label}
                                 </ToggleButton>
                             ))}
                         </ToggleButtonGroup>
@@ -192,9 +200,7 @@ export default function ProfilePage() {
                 {/* Makró célok */}
                 <Card>
                     <CardContent>
-                        <Typography variant="h6" fontWeight={600} gutterBottom>
-                            Napi célok
-                        </Typography>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>Napi célok</Typography>
                         <Stack spacing={2}>
                             <TextField
                                 label="Napi kalóriacél (kcal)"
@@ -208,28 +214,19 @@ export default function ProfilePage() {
                             <Divider />
                             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                                 <TextField
-                                    label="Fehérje (g)"
-                                    type="number"
-                                    value={proteinGoalG}
+                                    label="Fehérje (g)" type="number" value={proteinGoalG}
                                     onChange={(e) => setProteinGoalG(Number(e.target.value))}
-                                    inputProps={{ min: 0, 'aria-label': 'Napi fehérjecél grammban' }}
-                                    sx={{ flex: 1, minWidth: 120 }}
+                                    inputProps={{ min: 0 }} sx={{ flex: 1, minWidth: 120 }}
                                 />
                                 <TextField
-                                    label="Szénhidrát (g)"
-                                    type="number"
-                                    value={carbGoalG}
+                                    label="Szénhidrát (g)" type="number" value={carbGoalG}
                                     onChange={(e) => setCarbGoalG(Number(e.target.value))}
-                                    inputProps={{ min: 0, 'aria-label': 'Napi szénhidrátcél grammban' }}
-                                    sx={{ flex: 1, minWidth: 120 }}
+                                    inputProps={{ min: 0 }} sx={{ flex: 1, minWidth: 120 }}
                                 />
                                 <TextField
-                                    label="Zsír (g)"
-                                    type="number"
-                                    value={fatGoalG}
+                                    label="Zsír (g)" type="number" value={fatGoalG}
                                     onChange={(e) => setFatGoalG(Number(e.target.value))}
-                                    inputProps={{ min: 0, 'aria-label': 'Napi zsírcél grammban' }}
-                                    sx={{ flex: 1, minWidth: 120 }}
+                                    inputProps={{ min: 0 }} sx={{ flex: 1, minWidth: 120 }}
                                 />
                             </Box>
                         </Stack>
@@ -242,13 +239,24 @@ export default function ProfilePage() {
                         variant="contained"
                         startIcon={<SaveIcon />}
                         onClick={handleSave}
+                        disabled={isMutating}
                         sx={{ minHeight: 44 }}
-                        aria-label="Profil mentése"
                     >
-                        Mentés
+                        {isMutating ? 'Mentés...' : 'Mentés'}
                     </Button>
                 </Box>
             </Stack>
+
+            {/* Toast */}
+            <Snackbar
+                open={Boolean(toast)}
+                autoHideDuration={3000}
+                onClose={() => setToast(null)}
+            >
+                <Alert severity={toast?.severity} onClose={() => setToast(null)} aria-live="polite">
+                    {toast?.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }

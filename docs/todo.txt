@@ -1,0 +1,5 @@
+Profile page:
+
+Magasság testsúly kor ne legyen kötelező
+Napi kalóriacél, fehérje, szénhidrát, zsír mezőket lehessen törölni teljesen a szerkesztésnél, jelenleg 0 marad ott ha kitörlök minden karaktert, nem néz ki jól. 
+Automatikus kalkulátor beépítése, százalékban megadjuk a makrók eloszlását (mint pl yazion) és a beírt kalóriamennyiségből kalkulálja grammmra a makrókat
