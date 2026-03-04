@@ -29,16 +29,16 @@ export default function NotFound() {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
                 A keresett oldal nem létezik vagy áthelyezték. Ellenőrizd az URL-t, vagy térj vissza a főoldalra.
             </Typography>
-            <Button
-                component={Link}
-                href="/dashboard"
-                variant="contained"
-                size="large"
-                sx={{ minHeight: 44 }}
-                aria-label="Vissza a főoldalra"
-            >
-                Vissza a főoldalra
-            </Button>
+            <Link href="/dashboard" passHref>
+                <Button
+                    variant="contained"
+                    size="large"
+                    sx={{ minHeight: 44 }}
+                    aria-label="Vissza a főoldalra"
+                >
+                    Vissza a főoldalra
+                </Button>
+            </Link>
         </Box>
     );
 }

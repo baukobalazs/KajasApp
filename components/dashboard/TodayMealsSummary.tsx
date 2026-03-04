@@ -45,15 +45,11 @@ export default function TodayMealsSummary({ meals, date }: TodayMealsSummaryProp
                     <Typography variant="h6" fontWeight={600}>
                         Mai étkezések
                     </Typography>
-                    <Button
-                        component={Link}
-                        href={`/log/${date}`}
-                        size="small"
-                        variant="outlined"
-                        aria-label="Napló megnyitása"
-                    >
-                        Napló megnyitása
-                    </Button>
+                    <Link href={`/log/${date}`}>
+                        <Button size="small" variant="outlined">
+                            Napló megnyitása
+                        </Button>
+                    </Link>
                 </Box>
 
                 {meals.length === 0 ? (
@@ -70,15 +66,11 @@ export default function TodayMealsSummary({ meals, date }: TodayMealsSummaryProp
                     >
                         <RestaurantIcon sx={{ fontSize: 48, mb: 1, opacity: 0.4 }} />
                         <Typography variant="body2">Még nincs rögzített étkezés ma</Typography>
-                        <Button
-                            component={Link}
-                            href={`/log/${date}`}
-                            variant="contained"
-                            size="small"
-                            sx={{ mt: 2 }}
-                        >
-                            Étkezés hozzáadása
-                        </Button>
+                        <Link href={`/log/${date}`}>
+                            <Button variant="contained" size="small" sx={{ mt: 2 }}>
+                                Étkezés hozzáadása
+                            </Button>
+                        </Link>
                     </Box>
                 ) : (
                     <>

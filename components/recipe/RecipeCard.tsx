@@ -83,16 +83,11 @@ export default function RecipeCard({
 
             <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
                 <Tooltip title="Szerkesztés">
-                    <IconButton
-                        component={Link}
-                        href={`/recipes/${id}`}
-                        aria-label={`${name} szerkesztése`}
-                        size="small"
-                        color="primary"
-                        sx={{ minWidth: 44, minHeight: 44 }}
-                    >
-                        <EditIcon fontSize="small" />
-                    </IconButton>
+                    <Link href={`/recipes/${id}`}>
+                        <IconButton aria-label={`${name} szerkesztése`} size="small" color="primary" sx={{ minWidth: 44, minHeight: 44 }}>
+                            <EditIcon fontSize="small" />
+                        </IconButton>
+                    </Link>
                 </Tooltip>
                 <Tooltip title="Törlés">
                     <IconButton
