@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     Box,
@@ -13,52 +13,56 @@ import {
     Divider,
     Stack,
     Chip,
+    Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useRecipe, useCreateRecipe, useUpdateRecipe } from '@/lib/hooks/useApi';
+import FoodSearchDialog from '@/components/food/FoodSearchDialog';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface Ingredient {
-    id: string;
+    id?: string;
     foodId: string;
     name: string;
     amountG: number;
     caloriesPer100g: number;
-    proteinPer100g: number;
-    carbsPer100g: number;
-    fatPer100g: number;
 }
 
-// TODO: valódi adatok a 2. mérföldkőnél
-const mockRecipe = {
-    name: 'Csirkés rizstál',
-    description: 'Fehérjében gazdag ebéd csirkemellel és barna rizzsel.',
-    ingredients: [
-        { id: '1', foodId: 'f1', name: 'Csirkemell', amountG: 200, caloriesPer100g: 165, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 3.6 },
-        { id: '2', foodId: 'f2', name: 'Barna rizs', amountG: 100, caloriesPer100g: 360, proteinPer100g: 7.5, carbsPer100g: 76, fatPer100g: 2.7 },
-    ] as Ingredient[],
-};
-
 export default function RecipeEditorPage() {
-    const params = useParams();
+    const params = useParams<{ id: string }>();
     const router = useRouter();
-    const isNew = params.id === undefined;
+    const isNew = !params?.id || params.id === 'new';
+    const recipeId = isNew ? null : params.id;
 
-    const [name, setName] = useState(isNew ? '' : mockRecipe.name);
-    const [description, setDescription] = useState(isNew ? '' : mockRecipe.description);
-    const [ingredients, setIngredients] = useState<Ingredient[]>(
-        isNew ? [] : mockRecipe.ingredients
-    );
+    const { data: existingRecipe, isLoading } = useRecipe(recipeId);
+    const { trigger: createRecipe, isMutating: isCreating } = useCreateRecipe();
+    const { trigger: updateRecipe, isMutating: isUpdating } = useUpdateRecipe(recipeId || '');
+
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [serverError, setServerError] = useState('');
     const [errors, setErrors] = useState<{ name?: string }>({});
 
-    const totalCalories = ingredients.reduce(
-        (sum, i) => sum + Math.round((i.caloriesPer100g * i.amountG) / 100),
-        0
-    );
-    const totalProtein = ingredients.reduce(
-        (sum, i) => sum + Math.round((i.proteinPer100g * i.amountG) / 100),
-        0
-    );
+    // Meglévő recept adatainak betöltése
+    useEffect(() => {
+        if (existingRecipe) {
+            setName(existingRecipe.name || '');
+            setDescription(existingRecipe.description || '');
+            setIngredients(
+                (existingRecipe.ingredients || []).map((ing: any) => ({
+                    id: ing.id,
+                    foodId: ing.foodId,
+                    name: ing.food?.name || '',
+                    amountG: Number(ing.amountG),
+                    caloriesPer100g: Number(ing.food?.caloriesPer100g || 0),
+                }))
+            );
+        }
+    }, [existingRecipe]);
 
     const validate = () => {
         const newErrors: { name?: string } = {};
@@ -67,27 +71,59 @@ export default function RecipeEditorPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSave = () => {
-        if (!validate()) return;
-        // TODO: API hívás a 2. mérföldkőnél
-        console.log('Mentés:', { name, description, ingredients });
-        router.push('/recipes');
+    const handleFoodSelect = (food: any, amountG: number) => {
+        setIngredients((prev) => [
+            ...prev,
+            {
+                foodId: food.savedId,
+                name: food.name,
+                amountG,
+                caloriesPer100g: food.caloriesPer100g,
+            },
+        ]);
     };
 
-    const handleAmountChange = (id: string, amount: number) => {
+    const handleAmountChange = (index: number, amountG: number) => {
         setIngredients((prev) =>
-            prev.map((i) => (i.id === id ? { ...i, amountG: amount } : i))
+            prev.map((ing, i) => (i === index ? { ...ing, amountG } : ing))
         );
     };
 
-    const handleRemoveIngredient = (id: string) => {
-        setIngredients((prev) => prev.filter((i) => i.id !== id));
+    const handleRemove = (index: number) => {
+        setIngredients((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const handleAddIngredient = () => {
-        // TODO: FoodSearchDialog megnyitása a 2. mérföldkőnél
-        console.log('Hozzávaló hozzáadása');
+    const handleSave = async () => {
+        if (!validate()) return;
+        setServerError('');
+
+        const payload = {
+            name,
+            description: description || undefined,
+            ingredients: ingredients.map((i) => ({
+                foodId: i.foodId,
+                amountG: i.amountG,
+            })),
+        };
+
+        try {
+            if (isNew) {
+                await createRecipe(payload);
+            } else {
+                await updateRecipe(payload);
+            }
+            router.push('/recipes');
+        } catch (err: any) {
+            setServerError(err.message || 'Hiba történt a mentés során');
+        }
     };
+
+    const totalCalories = ingredients.reduce(
+        (sum, i) => sum + Math.round((i.caloriesPer100g * i.amountG) / 100),
+        0
+    );
+
+    if (!isNew && isLoading) return <SkeletonLoader type="form" />;
 
     return (
         <Box component="section" aria-labelledby="recipe-editor-title">
@@ -105,26 +141,28 @@ export default function RecipeEditorPage() {
                 </Typography>
             </Box>
 
+            {serverError && (
+                <Alert severity="error" sx={{ mb: 2 }} role="alert">
+                    {serverError}
+                </Alert>
+            )}
+
             <Stack spacing={3}>
-                {/* Alap adatok */}
+                {/* Alapadatok */}
                 <Card>
                     <CardContent>
                         <Typography variant="h6" fontWeight={600} gutterBottom>
                             Alapadatok
                         </Typography>
-
                         <Stack spacing={2}>
                             <TextField
                                 label="Recept neve"
                                 value={name}
-                                onChange={(e) => {
-                                    setName(e.target.value);
-                                    if (errors.name) setErrors({});
-                                }}
+                                onChange={(e) => { setName(e.target.value); if (errors.name) setErrors({}); }}
                                 error={Boolean(errors.name)}
                                 helperText={errors.name}
-                                inputProps={{ 'aria-required': 'true' }}
                                 required
+                                inputProps={{ 'aria-required': 'true' }}
                             />
                             <TextField
                                 label="Leírás (opcionális)"
@@ -140,14 +178,7 @@ export default function RecipeEditorPage() {
                 {/* Hozzávalók */}
                 <Card>
                     <CardContent>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                mb: 2,
-                            }}
-                        >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                             <Typography variant="h6" fontWeight={600}>
                                 Hozzávalók
                             </Typography>
@@ -155,7 +186,7 @@ export default function RecipeEditorPage() {
                                 startIcon={<AddIcon />}
                                 variant="outlined"
                                 size="small"
-                                onClick={handleAddIngredient}
+                                onClick={() => setSearchOpen(true)}
                                 aria-label="Hozzávaló hozzáadása"
                                 sx={{ minHeight: 44 }}
                             >
@@ -166,60 +197,42 @@ export default function RecipeEditorPage() {
                         {ingredients.length === 0 ? (
                             <Box
                                 sx={{
-                                    py: 4,
-                                    textAlign: 'center',
-                                    border: '1px dashed',
-                                    borderColor: 'divider',
-                                    borderRadius: 2,
-                                    color: 'text.secondary',
+                                    py: 4, textAlign: 'center',
+                                    border: '1px dashed', borderColor: 'divider',
+                                    borderRadius: 2, color: 'text.secondary',
                                 }}
                                 role="status"
                             >
-                                <Typography variant="body2">
-                                    Még nincs hozzávaló hozzáadva
-                                </Typography>
+                                <Typography variant="body2">Még nincs hozzávaló hozzáadva</Typography>
                             </Box>
                         ) : (
                             <Stack divider={<Divider />} spacing={0}>
-                                {ingredients.map((ingredient) => {
+                                {ingredients.map((ingredient, index) => {
                                     const cal = Math.round((ingredient.caloriesPer100g * ingredient.amountG) / 100);
                                     return (
                                         <Box
-                                            key={ingredient.id}
+                                            key={index}
                                             sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 1,
-                                                py: 1.5,
+                                                display: 'flex', alignItems: 'center',
+                                                gap: 1, py: 1.5,
                                                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
                                             }}
                                         >
                                             <Typography variant="body2" fontWeight={600} sx={{ flexGrow: 1 }}>
                                                 {ingredient.name}
                                             </Typography>
-
                                             <TextField
                                                 type="number"
                                                 value={ingredient.amountG}
-                                                onChange={(e) => handleAmountChange(ingredient.id, Number(e.target.value))}
+                                                onChange={(e) => handleAmountChange(index, Number(e.target.value))}
                                                 size="small"
-                                                inputProps={{
-                                                    min: 1,
-                                                    'aria-label': `${ingredient.name} mennyisége`,
-                                                }}
+                                                inputProps={{ min: 1, 'aria-label': `${ingredient.name} mennyisége` }}
                                                 InputProps={{ endAdornment: <Typography variant="caption">g</Typography> }}
                                                 sx={{ width: 90 }}
                                             />
-
-                                            <Chip
-                                                label={`${cal} kcal`}
-                                                size="small"
-                                                color="secondary"
-                                                variant="outlined"
-                                            />
-
+                                            <Chip label={`${cal} kcal`} size="small" color="secondary" variant="outlined" />
                                             <IconButton
-                                                onClick={() => handleRemoveIngredient(ingredient.id)}
+                                                onClick={() => handleRemove(index)}
                                                 aria-label={`${ingredient.name} eltávolítása`}
                                                 size="small"
                                                 color="error"
@@ -235,43 +248,36 @@ export default function RecipeEditorPage() {
 
                         {/* Összesítő */}
                         {ingredients.length > 0 && (
-                            <Box
-                                sx={{
-                                    mt: 2,
-                                    pt: 2,
-                                    borderTop: '1px solid',
-                                    borderColor: 'divider',
-                                    display: 'flex',
-                                    gap: 2,
-                                    flexWrap: 'wrap',
-                                }}
-                            >
+                            <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', gap: 2 }}>
                                 <Chip label={`Összesen: ${totalCalories} kcal`} color="secondary" />
-                                <Chip label={`Fehérje: ${totalProtein}g`} color="primary" variant="outlined" />
                             </Box>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Mentés gomb */}
+                {/* Mentés */}
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => router.back()}
-                        sx={{ minHeight: 44 }}
-                    >
+                    <Button variant="outlined" onClick={() => router.back()} sx={{ minHeight: 44 }}>
                         Mégse
                     </Button>
                     <Button
                         variant="contained"
                         onClick={handleSave}
+                        disabled={isCreating || isUpdating}
                         sx={{ minHeight: 44 }}
-                        aria-label={isNew ? 'Recept létrehozása' : 'Változások mentése'}
                     >
-                        {isNew ? 'Létrehozás' : 'Mentés'}
+                        {isCreating || isUpdating ? 'Mentés...' : isNew ? 'Létrehozás' : 'Mentés'}
                     </Button>
                 </Box>
             </Stack>
+
+            {/* Étel kereső dialógus */}
+            <FoodSearchDialog
+                open={searchOpen}
+                onClose={() => setSearchOpen(false)}
+                onSelect={handleFoodSelect}
+                title="Hozzávaló hozzáadása"
+            />
         </Box>
     );
 }

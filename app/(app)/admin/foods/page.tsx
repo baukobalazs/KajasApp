@@ -31,20 +31,33 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import { useFoods, useDeleteFood } from '@/lib/hooks/useApi';
+import { useFoods, useCreateFood, useUpdateFood, useDeleteFood } from '@/lib/hooks/useApi';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import FoodFormDialog from '@/components/admin/FoodFormDialog';
 
 type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g';
 type SortOrder = 'asc' | 'desc';
 
+interface FoodFormData {
+    name: string;
+    caloriesPer100g: number;
+    proteinPer100g: number;
+    carbsPer100g: number;
+    fatPer100g: number;
+}
+
 export default function AdminFoodsPage() {
     const { data: foods, isLoading, error, mutate } = useFoods();
+    const { trigger: createFood } = useCreateFood();
+    const { trigger: updateFood } = useUpdateFood();
     const { trigger: deleteFood } = useDeleteFood();
 
     const [search, setSearch] = useState('');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editFood, setEditFood] = useState<any>(null);
     const [page, setPage] = useState(0);
     const [toast, setToast] = useState('');
     const rowsPerPage = 10;
@@ -59,6 +72,27 @@ export default function AdminFoodsPage() {
     };
 
     const foodToDelete = foods?.find((f: any) => f.id === deleteId);
+
+    const handleOpenCreate = () => {
+        setEditFood(null);
+        setFormOpen(true);
+    };
+
+    const handleOpenEdit = (food: any) => {
+        setEditFood(food);
+        setFormOpen(true);
+    };
+
+    const handleSave = async (data: FoodFormData) => {
+        if (editFood) {
+            await updateFood({ id: editFood.id, ...data });
+            setToast('Élelmiszer sikeresen frissítve');
+        } else {
+            await createFood(data);
+            setToast('Élelmiszer sikeresen hozzáadva');
+        }
+        await mutate();
+    };
 
     const handleDeleteConfirm = async () => {
         if (!deleteId) return;
@@ -101,7 +135,7 @@ export default function AdminFoodsPage() {
                     startIcon={<AddIcon />}
                     aria-label="Új élelmiszer hozzáadása"
                     sx={{ minHeight: 44 }}
-                    onClick={() => console.log('TODO: FoodFormDialog')}
+                    onClick={handleOpenCreate}
                 >
                     Új élelmiszer
                 </Button>
@@ -198,7 +232,7 @@ export default function AdminFoodsPage() {
                                                 color="primary"
                                                 aria-label={`${food.name} szerkesztése`}
                                                 sx={{ minWidth: 44, minHeight: 44 }}
-                                                onClick={() => console.log('TODO: FoodFormDialog', food.id)}
+                                                onClick={() => handleOpenEdit(food)}
                                             >
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
@@ -252,6 +286,21 @@ export default function AdminFoodsPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Élelmiszer form dialógus */}
+            <FoodFormDialog
+                open={formOpen}
+                onClose={() => setFormOpen(false)}
+                onSave={handleSave}
+                title={editFood ? 'Élelmiszer szerkesztése' : 'Új élelmiszer hozzáadása'}
+                initial={editFood ? {
+                    name: editFood.name,
+                    caloriesPer100g: Number(editFood.caloriesPer100g),
+                    proteinPer100g: Number(editFood.proteinPer100g || 0),
+                    carbsPer100g: Number(editFood.carbsPer100g || 0),
+                    fatPer100g: Number(editFood.fatPer100g || 0),
+                } : undefined}
+            />
 
             {/* Toast */}
             <Snackbar

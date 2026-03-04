@@ -24,7 +24,7 @@ export function useFoods(filters: FoodFilters = {}) {
     return useSWR(`/api/foods${query ? `?${query}` : ''}`, fetcher);
 }
 
-async function postFood(url: string, { arg }: { arg: Record<string, unknown> }) {
+async function postFood(url: string, { arg }: { arg: any }) {
     const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
