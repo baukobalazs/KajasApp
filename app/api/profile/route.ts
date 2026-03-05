@@ -7,14 +7,14 @@ import { userProfiles } from '@/db/schema';
 import { authOptions } from '@/lib/auth';
 
 const profileSchema = z.object({
-    heightCm: z.number().min(100).max(250).optional(),
-    weightKg: z.number().min(30).max(300).optional(),
-    age: z.number().min(10).max(120).optional(),
+    heightCm: z.number().min(100).max(250).optional().nullable(),
+    weightKg: z.number().min(30).max(300).optional().nullable(),
+    age: z.number().min(10).max(120).optional().nullable(),
     goal: z.enum(['loss', 'maintain', 'gain']).optional(),
-    dailyCalorieGoal: z.number().min(500).max(10000).optional(),
-    proteinGoalG: z.number().min(0).optional(),
-    carbGoalG: z.number().min(0).optional(),
-    fatGoalG: z.number().min(0).optional(),
+    dailyCalorieGoal: z.number().min(500).max(10000).optional().nullable(),
+    proteinGoalG: z.number().min(0).optional().nullable(),
+    carbGoalG: z.number().min(0).optional().nullable(),
+    fatGoalG: z.number().min(0).optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
@@ -45,8 +45,14 @@ export async function PUT(req: NextRequest) {
         const [updated] = await db
             .update(userProfiles)
             .set({
-                ...parsed.data,
-                weightKg: parsed.data.weightKg ? String(parsed.data.weightKg) : undefined,
+                heightCm: parsed.data.heightCm ?? null,
+                weightKg: parsed.data.weightKg ? String(parsed.data.weightKg) : null,
+                age: parsed.data.age ?? null,
+                goal: parsed.data.goal,
+                dailyCalorieGoal: parsed.data.dailyCalorieGoal ?? null,
+                proteinGoalG: parsed.data.proteinGoalG ?? null,
+                carbGoalG: parsed.data.carbGoalG ?? null,
+                fatGoalG: parsed.data.fatGoalG ?? null,
                 updatedAt: new Date(),
             })
             .where(eq(userProfiles.userId, session.user.id))
