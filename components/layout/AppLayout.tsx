@@ -2,6 +2,7 @@
 
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import Navbar from './Navbar';
+import { useEffect, useState } from 'react';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -9,7 +10,11 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 600);
+    }, []);
 
     return (
         <Box
@@ -60,6 +65,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 id="main-content"
                 component="main"
                 tabIndex={-1}
+                suppressHydrationWarning
                 sx={{
                     flexGrow: 1,
                     px: { xs: 2, sm: 3, md: 4 },       // reszponzív padding

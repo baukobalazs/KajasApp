@@ -15,7 +15,7 @@ az AI válaszait, és a saját döntéseimet az elfogadás/módosítás/elutasí
 **Fázis:** Tervezés  
 **Prompt (összefoglalva):** Táplálkozás követő alkalmazást szeretnék készíteni. Milyen stack-et javasolsz? Milyen entitások kellenek?
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI először Firebase + React kombinációt javasolt, majd Angular + REST API alternatívát mutatott be. Részletesen elmagyarázta a különbségeket: Firebase NoSQL alapú, beépített auth és hosting, de komplex lekérdezések nehézkesek. Angular strukturált, TypeScript-first, de meredekebb tanulási görbe. A Next.js + Neon kombinációt csak akkor javasolta, amikor megemlítettem hogy azt már ismerem munkából.
 
 **Döntés: Módosítva ✏️**  
@@ -34,7 +34,7 @@ Az AI eredeti javaslata Firebase volt, én azonban a Next.js + Neon + Drizzle ko
 **Fázis:** Tervezés  
 **Prompt (összefoglalva):** Milyen entitások kellenek a táplálkozás követőhöz? Legalább 5 kell a követelmények szerint.
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI 5 entitást javasolt: User, UserProfile, Food, Meal, MealEntry. A DailyLog entitást nem javasolta külön táblába menteni, hanem lekérdezéssel számolni. Recepteket opcionálisan ajánlotta 6. entitásként.
 
 **Döntés: Elfogadva + bővítve ✅**  
@@ -52,7 +52,7 @@ Az 5 alap entitást elfogadtam, és hozzáadtam a Recipe + RecipeIngredients ent
 **Fázis:** Dokumentáció  
 **Prompt (összefoglalva):** Csináljunk specifikációs dokumentumot.
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI egyetlen nagy SPECIFICATION.md fájlt generált, amely mindent tartalmazott (adatmodell, komponensek, spec egyben).
 
 **Döntés: Elutasítva, újragenerálva ❌**  
@@ -72,7 +72,7 @@ Az AI nem tudott erről a követelményről (nem volt benne a promptban), ezért
 **Fázis:** Implementáció (Dashboard oldal)  
 **Prompt (összefoglalva):** Csináld meg a Dashboard oldalt MUI komponensekkel.
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI MUI v5/v6-os Grid szintaxist generált:
 ```tsx
 <Grid container spacing={3}>
@@ -105,7 +105,7 @@ Az összes Grid komponenst manuálisan javítottam az új szintaxisra.
 **Fázis:** Implementáció (layout komponensek bekötése)  
 **Prompt (összefoglalva):** Kösd be az AppLayout komponenst az (app)/layout.tsx-be.
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI `@/` path alias-t használt az importban:
 ```tsx
 import AppLayout from '@/components/layout/AppLayout';
@@ -130,12 +130,16 @@ Ezután az `@/` alias is működni kezdett.
 
 ---
 
+## 2. mérföldkő — Backend és adatok
+
+---
+
 ### #6 — Drizzle migrate DATABASE_URL hiba
 
 **Fázis:** Adatbázis beállítás  
 **Prompt (összefoglalva):** Futtassuk a Drizzle migrációt a Neon adatbázisra.
 
-**AI válasz összefoglalva:**
+**AI válasz összefoglalva:**  
 Az AI a következő parancsokat javasolta:
 ```bash
 pnpm db:generate
@@ -148,7 +152,7 @@ Error: Please provide required params for Postgres driver:
   [x] url: undefined
 ```
 
-**Döntés: AI megoldása elfogadva ✅**  
+**Döntés: Elfogadva ✅**  
 A `drizzle-kit` nem olvassa automatikusan a `.env.local` fájlt. Az AI javasolta a `dotenv-cli` telepítését és a package.json scripts módosítását:
 ```json
 "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate"
@@ -160,25 +164,161 @@ Ez megoldotta a problémát. Az AI helyesen diagnosztizálta a hibát és műkö
 
 ---
 
-## 2. mérföldkő — Backend és adatok
+### #7 — Zod v4 breaking change
 
-*[Ide kerülnek a 2. mérföldkő fejlesztése során keletkező promptok és döntések]*
+**Fázis:** Implementáció (register API route)  
+**Prompt (összefoglalva):** Zod validáció a regisztrációs API route-ban.
+
+**AI válasz összefoglalva:**  
+Az AI a következő szintaxist generálta:
+```ts
+parsed.error.errors[0].message
+```
+
+**Hiba:** Runtime error — `errors` property nem létezik.
+
+**Döntés: Módosítva ✏️**  
+Zod v4-ben az `errors` property neve `issues`-re változott. Helyes szintaxis:
+```ts
+parsed.error.issues[0].message
+```
+
+**Tanulság:** Az AI Zod v3 szintaxist generált, a v4 breaking change-t nem ismerte.
+
+---
+
+### #8 — Next.js 15 params Promise wrapper
+
+**Fázis:** Implementáció (API routes)  
+**Prompt (összefoglalva):** Dinamikus API route-ok `[id]` paraméterrel.
+
+**AI válasz összefoglalva:**  
+Az AI közvetlen destructuringot generált:
+```ts
+{ params }: { params: { id: string } }
+```
+
+**Hiba:** TypeScript error — params nem destructurálható közvetlenül.
+
+**Döntés: Módosítva ✏️**  
+Next.js 15-ben a params Promise-ba van csomagolva:
+```ts
+{ params }: { params: Promise<{ id: string }> }
+const { id } = await params;
+```
+
+**Tanulság:** Az AI Next.js 14 szintaxist generált, a v15 breaking change-t nem ismerte.
+
+---
+
+### #9 — MUI component={Link} prerender hiba Vercelen
+
+**Fázis:** Deploy  
+**Prompt (összefoglalva):** Vercel deploy futtatása.
+
+**Hiba:**
+```
+Functions cannot be passed directly to Client Components
+```
+
+**Döntés: Módosítva ✏️**  
+Két lépéses megoldás:
+- `export const dynamic = 'force-dynamic'` hozzáadva az `(app)/layout.tsx` és `(auth)/layout.tsx` fájlokhoz
+- `component={Link}` prop helyett `<Link><Button>` wrapper használata
+
+**Tanulság:** Az AI nem jelezte előre a szerver/kliens határon átmenő Next.js prerender problémát.
+
+---
+
+### #10 — OpenFoodFacts API URL
+
+**Fázis:** Implementáció (élelmiszer keresés)  
+**Prompt (összefoglalva):** OpenFoodFacts API integráció élelmiszer kereséshez.
+
+**AI válasz összefoglalva:**  
+Az AI a `.org` domain-t ajánlotta az API dokumentáció alapján.
+
+**Döntés: Módosítva ✏️**  
+Saját tesztelés alapján a `.net` domain gyorsabban válaszol. Mindkét környezetben (dev + prod) a `.net` változat lett használva.
+
+**Tanulság:** Az AI a hivatalos dokumentációt követte, de a gyakorlati teljesítményt csak saját teszteléssel lehetett megállapítani.
 
 ---
 
 ## 3. mérföldkő — Biztonság és tesztelés
 
-*[Ide kerülnek a 3. mérföldkő fejlesztése során keletkező promptok és döntések]*
+---
+
+### #11 — React 19 + MUI + Jest inkompatibilitás
+
+**Fázis:** Tesztelés  
+**Prompt (összefoglalva):** Komponens unit tesztek írása React Testing Library-vel.
+
+**AI válasz összefoglalva:**  
+Az AI MUI komponenseket közvetlenül tesztelt RTL `render()`-rel, ThemeProvider wrapperrel.
+
+**Hiba:** MUI komponensek nem renderelnek semmit tesztben — a DOM `<body><div /></body>` marad, `act()` wrapperrel sem javul.
+
+**Döntés: Elutasítva, logika tesztekre váltva ❌**  
+Komponens tesztek helyett tiszta logika teszteket írtunk: `calcMacros`, kalória számítás, makró validáció. Ezek MUI-tól függetlenek és stabilan futnak.
+
+**Tanulság:** React 19 + MUI + Jest kombináció jelenleg nem támogatott. Az AI nem jelezte előre ezt az inkompatibilitást.
 
 ---
 
-## Összefoglalás (1. mérföldkő végén)
+### #12 — Jest konfigurációs kulcsnév: setupFilesAfterEnv
 
-| # | Téma | Döntés | AI hibázott? |
-|---|------|--------|--------------|
-| 1 | Stack döntés | Módosítva — Next.js + Neon választva Firebase helyett | Nem hibázott, de nem ismerte a kontextust |
-| 2 | Adatmodell | Bővítve — Recipe entitás hozzáadva | Nem hibázott, minimális megoldást adott |
-| 3 | Docs struktúra | Elutasítva — 3 külön fájl kellett 1 helyett | Igen — nem tudott a követelményről |
-| 4 | MUI Grid v7 | Módosítva — új size prop szintaxis | Igen — elavult API-t használt |
-| 5 | TypeScript alias | Módosítva — tsconfig javítás szükséges volt | Igen — feltételezte a konfigurációt |
-| 6 | Drizzle migrate | Elfogadva — dotenv-cli megoldás működött | Nem hibázott |
+**Fázis:** Tesztelés  
+**Prompt (összefoglalva):** Jest konfiguráció beállítása TypeScript projektben.
+
+**AI válasz összefoglalva:**  
+Az AI háromszor egymás után rossz kulcsnevet írt a jest.config.ts-be:
+- `setupFilesAfterFramework` (1. próba)
+- `setupFilesAfterEach` (2. próba)
+- `setupFilesAfterEnv` (3. próba — helyes)
+
+**Döntés: Módosítva ✏️**  
+A helyes kulcsnevet (`setupFilesAfterEnv`) a TypeScript compiler adta meg, nem az AI.
+
+**Tanulság:** Konfigurációs kulcsneveknél érdemes a TypeScript compiler autocomplete-jére támaszkodni, nem csak az AI javaslatára.
+
+---
+
+### #13 — calcMacros teszt számítási hiba
+
+**Fázis:** Tesztelés  
+**Prompt (összefoglalva):** Unit teszt írása a calcMacros függvényhez.
+
+**AI válasz összefoglalva:**  
+Az AI a következő tesztértéket generálta:
+```ts
+expect(kcalFromMacros(150, 225, 56)).toBe(2104);
+```
+
+**Hiba:** A teszt elbukott — a helyes érték 2004, nem 2104.  
+Számítás: `150×4 + 225×4 + 56×9 = 600 + 900 + 504 = 2004`
+
+**Döntés: Módosítva ✏️**  
+Az elvárt értéket 2004-re javítottam. A hibát maga a tesztfuttatás fedte fel.
+
+**Tanulság:** Az AI egyszerű aritmetikai hibát vétett. A tesztek önmaguk is tesztelik az AI által generált értékek helyességét — ez a TDD egyik értéke.
+
+---
+
+## Összefoglalás
+
+| # | Mérföldkő | Téma | Döntés | AI hibázott? |
+|---|-----------|------|--------|--------------|
+| 1 | M1 | Stack döntés | Módosítva — Next.js + Neon választva Firebase helyett | Nem hibázott, de nem ismerte a kontextust |
+| 2 | M1 | Adatmodell | Bővítve — Recipe entitás hozzáadva | Nem hibázott, minimális megoldást adott |
+| 3 | M1 | Docs struktúra | Elutasítva — 3 külön fájl kellett 1 helyett | Igen — nem tudott a követelményről |
+| 4 | M1 | MUI Grid v7 | Módosítva — új size prop szintaxis | Igen — elavult API-t használt |
+| 5 | M1 | TypeScript alias | Módosítva — tsconfig javítás szükséges volt | Igen — feltételezte a konfigurációt |
+| 6 | M2 | Drizzle migrate | Elfogadva — dotenv-cli megoldás működött | Nem hibázott |
+| 7 | M2 | Zod v4 breaking change | Módosítva — errors → issues | Igen — elavult szintaxist használt |
+| 8 | M2 | Next.js 15 params | Módosítva — Promise wrapper szükséges | Igen — v14 szintaxist generált |
+| 9 | M2 | Vercel prerender hiba | Módosítva — force-dynamic + Link wrapper | Igen — nem jelezte előre |
+| 10 | M2 | OpenFoodFacts URL | Módosítva — .net gyorsabb mint .org | Nem hibázott, docs-t követte |
+| 11 | M3 | React 19 + MUI + Jest | Elutasítva — logika tesztekre váltva | Igen — inkompatibilitást nem jelezte |
+| 12 | M3 | setupFilesAfterEnv | Módosítva — háromszor rossz kulcsnév | Igen — konfigurációs hiba |
+| 13 | M3 | calcMacros teszt érték | Módosítva — 2104 → 2004 | Igen — számítási hiba |
