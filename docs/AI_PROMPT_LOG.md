@@ -305,6 +305,89 @@ Az elvárt értéket 2004-re javítottam. A hibát maga a tesztfuttatás fedte f
 
 ---
 
+### #14 — Hydration hiba: `<p>` nem tartalmazhat `<div>`-t
+
+**Fázis:** Implementáció (FoodSearchDialog)  
+**Prompt (összefoglalva):** FoodSearchDialog hydration hiba javítása.
+
+**AI válasz összefoglalva:**  
+Az AI `ListItemText` `secondary` prop-ba `<Box>` + `<Chip>` elemeket rakott, amelyek `<div>`-ként renderelnek.
+
+**Hiba:**
+```
+In HTML, <div> cannot be a descendant of <p>.
+```
+
+**Döntés: Módosítva ✏️**  
+A `ListItemText`-hez hozzáadva `secondaryTypographyProps={{ component: 'span' }}`, és a `<Box>`-ra `component="span"` — így minden `<span>`-ba kerül, nem `<p>`-be.
+
+**Tanulság:** Az AI nem vette figyelembe hogy az MUI `ListItemText` secondary prop-ja alapértelmezetten `<p>` tagbe renderel. HTML szabály: `<p>` nem tartalmazhat block-level elemet.
+
+---
+
+### #15 — React event bubbling: RecipeCard kártya + Link gomb
+
+**Fázis:** Implementáció (RecipeCard)  
+**Prompt (összefoglalva):** Kártyára kattintáskor navigálás, szerkesztés gombra kattintáskor szerkesztő oldal.
+
+**AI válasz összefoglalva:**  
+Az AI a kártyára `onClick` router.push-t rakott, a szerkesztés gombra `<Link>`-et — de nem jelezte hogy a kattintás bubblingolni fog.
+
+**Hiba:** Szerkesztés gombra kattintva mindkét handler elsült — a Link navigált, majd a Card onClick is.
+
+**Döntés: Módosítva ✏️**  
+A `<Link>`-re hozzáadva `onClick={(e) => e.stopPropagation()}`.
+
+**Tanulság:** Az AI nem figyelmeztetett az event bubbling problémára nested kattintható elemeknél. Mindig `stopPropagation()` kell ha kattintható elemen belül van másik kattintható elem.
+
+---
+
+### #16 — Recept gramm kalkuláció hibás
+
+**Fázis:** Implementáció (AddRecipeToMealDialog)  
+**Prompt (összefoglalva):** Recept hozzáadása étkezéshez gramm módban.
+
+**AI válasz összefoglalva:**  
+Az AI a következő kalkulációt generálta:
+```ts
+Math.round(recipe.totalCalories * grams / 100)
+```
+
+**Hiba:** 400g összsúlyú recept (1000 kcal) esetén 100g-ra 1000 kcal-t számolt — nyilván helytelen.
+
+**Döntés: Módosítva ✏️**  
+A helyes kalkuláció `totalWeight` alapján:
+```ts
+Math.round(recipe.totalCalories * grams / recipe.totalWeight)
+```
+A `totalWeight`-et az összes hozzávaló grammsúlyának összegeként kell kiszámolni.
+
+**Tanulság:** Az AI a `/100` konvenciót alkalmazta (mint az ételek esetén), de recepteknél a referencia az összsúly, nem 100g.
+
+---
+
+### #17 — Playwright e2e label eltérések
+
+**Fázis:** Tesztelés (e2e)  
+**Prompt (összefoglalva):** E2e teszt írása étel hozzáadásához.
+
+**AI válasz összefoglalva:**  
+Az AI a következő selectorokat generálta:
+```ts
+page.getByLabel('Email')
+page.getByLabel('Mennyiség grammban')
+```
+
+**Hiba:** Mindkét selector timeout-olt — a label szövegek nem egyeztek a tényleges UI-val.
+
+**Döntés: Módosítva ✏️**  
+- `getByLabel('Email')` → `getByLabel('E-mail cím')` (a TextField label szövege)
+- `getByLabel('Mennyiség grammban')` → `getByRole('spinbutton')` (type="number" input Playwright-ban spinbutton role-t kap)
+
+**Tanulság:** Az AI nem ismerte a pontos label szövegeket. E2e teszteknél mindig ellenőrizni kell a tényleges DOM-ot, nem az AI által feltételezett selector neveket.
+
+---
+
 ## Összefoglalás
 
 | # | Mérföldkő | Téma | Döntés | AI hibázott? |
@@ -322,3 +405,7 @@ Az elvárt értéket 2004-re javítottam. A hibát maga a tesztfuttatás fedte f
 | 11 | M3 | React 19 + MUI + Jest | Elutasítva — logika tesztekre váltva | Igen — inkompatibilitást nem jelezte |
 | 12 | M3 | setupFilesAfterEnv | Módosítva — háromszor rossz kulcsnév | Igen — konfigurációs hiba |
 | 13 | M3 | calcMacros teszt érték | Módosítva — 2104 → 2004 | Igen — számítási hiba |
+| 14 | M3 | Hydration: p > div tiltott | Módosítva — component="span" + secondaryTypographyProps | Igen — HTML szabályt nem vette figyelembe |
+| 15 | M3 | Event bubbling RecipeCard | Módosítva — stopPropagation hozzáadva | Igen — nem jelezte előre |
+| 16 | M3 | Recept gramm kalkuláció | Módosítva — totalWeight alapú számítás | Igen — rossz referencia értéket használt |
+| 17 | M3 | Playwright label eltérések | Módosítva — spinbutton role + helyes label | Igen — nem ismerte a tényleges UI szövegeket |
