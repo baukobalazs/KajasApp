@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KajApp — Táplálkozás Követő
 
-## Getting Started
+Személyes táplálkozás követő webalkalmazás, amely lehetővé teszi az étkezések naplózását, receptek kezelését és a napi kalória- valamint makrotápanyag-bevitel nyomon követését.
 
-First, run the development server:
+## Technológiai stack
+
+- **Next.js 15** — App Router, szerver és kliens komponensek
+- **TypeScript** — típusbiztos fejlesztés
+- **MUI (Material UI v7)** — UI komponens könyvtár
+- **Drizzle ORM** — adatbázis séma és lekérdezések
+- **Neon** — PostgreSQL adatbázis (serverless)
+- **NextAuth v4** — autentikáció
+- **SWR** — adatbetöltés és cache
+- **OpenFoodFacts API** — élelmiszer adatbázis
+
+## Funkciók
+
+- Regisztráció és bejelentkezés
+- Napi étkezési napló (reggeli, ebéd, vacsora, snack)
+- Élelmiszer keresés az OpenFoodFacts adatbázisban
+- Saját élelmiszer adatbázis
+- Receptek létrehozása, szerkesztése, törlése
+- Makrotápanyag kalkulátor a profil oldalon
+- Kalória és makró összesítők
+
+---
+
+## Lokális futtatás
+
+### Előfeltételek
+
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- Neon adatbázis fiók ([neon.tech](https://neon.tech))
+
+### 1. Klónozás
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url>
+cd kajasapp
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Függőségek telepítése
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Környezeti változók beállítása
 
-## Learn More
+Hozz létre egy `.env.local` fájlt a projekt gyökerében:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# Neon PostgreSQL
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# NextAuth
+NEXTAUTH_SECRET=valamilyen-titkos-kulcs
+NEXTAUTH_URL=http://localhost:3000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# OpenFoodFacts (opcionális, alapértelmezett: https://world.openfoodfacts.net)
+OPENFOODFACTS_URL=https://world.openfoodfacts.net
+```
 
-## Deploy on Vercel
+A `NEXTAUTH_SECRET` generálásához:
+```bash
+openssl rand -base64 32
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Adatbázis migráció
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
+### 5. Fejlesztői szerver indítása
+
+```bash
+pnpm dev
+```
+
+Az alkalmazás elérhető: [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Elérhető parancsok
+
+| Parancs | Leírás |
+|---------|--------|
+| `pnpm dev` | Fejlesztői szerver indítása |
+| `pnpm build` | Produkciós build |
+| `pnpm start` | Produkciós szerver indítása |
+| `pnpm lint` | ESLint futtatása |
+| `pnpm test` | Unit tesztek futtatása |
+| `pnpm db:generate` | Drizzle migrációs fájlok generálása |
+| `pnpm db:migrate` | Adatbázis migráció futtatása |
+| `pnpm db:studio` | Drizzle Studio megnyitása |
+
+---
+
+## Projekt struktúra
+
+```
+kajasapp/
+├── app/
+│   ├── (app)/          # Védett oldalak (bejelentkezés szükséges)
+│   │   ├── dashboard/
+│   │   ├── log/[date]/
+│   │   ├── foods/
+│   │   ├── recipes/
+│   │   └── profile/
+│   ├── (auth)/         # Autentikációs oldalak
+│   │   ├── login/
+│   │   └── register/
+│   └── api/            # API route-ok
+├── components/         # React komponensek
+├── db/                 # Drizzle séma és konfiguráció
+├── lib/                # Utility függvények, hooks
+└── docs/               # Dokumentáció
+```
+
+---
+
+## Tesztek futtatása
+
+```bash
+# Unit tesztek
+pnpm test
+
+# Watch módban
+pnpm test:watch
+```
+
+## Deploy
+
+Az alkalmazás Vercelen van deployolva. A `main` branch-re pusholt változások automatikusan deployolódnak.
