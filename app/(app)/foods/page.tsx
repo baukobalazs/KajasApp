@@ -23,6 +23,8 @@ import FoodCard from '@/components/food/FoodCard';
 import EmptyState from '@/components/ui/EmptyState';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { useFoods } from '@/lib/hooks/useApi';
+import AddFoodToMealDialog from '@/components/food/AddFoodToMealDialog';
+import FoodSearchDialog from '@/components/food/FoodSearchDialog';
 
 type SortOption = 'name_asc' | 'name_desc' | 'calories_asc' | 'calories_desc' | 'protein_desc';
 
@@ -39,16 +41,29 @@ export default function FoodsPage() {
     const [sortBy, setSortBy] = useState<SortOption>('name_asc');
     const [calorieRange, setCalorieRange] = useState<[number, number]>([0, 600]);
     const [showFilters, setShowFilters] = useState(false);
+    const [addDialogFood, setAddDialogFood] = useState<{ id: string; name: string; caloriesPer100g: number } | null>(null);
+    const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+
 
     // SWR — keresés és szűrés szerver oldalon
     const [sortField, sortOrder] = sortBy.split('_') as [string, string];
-    const { data: foods, isLoading, error } = useFoods({
+    const { data: foods, isLoading, error, mutate } = useFoods({
         search,
         minCal: calorieRange[0] > 0 ? calorieRange[0] : undefined,
         maxCal: calorieRange[1] < 600 ? calorieRange[1] : undefined,
         sortBy: sortField === 'name' ? 'name' : sortField === 'calories' ? 'calories' : 'protein',
         sortOrder: sortOrder === 'desc' ? 'desc' : 'asc',
     });
+
+    const handleAdd = (id: string) => {
+        const food = sorted.find((f: any) => f.id === id);
+        if (food) setAddDialogFood({ id: food.id, name: food.name, caloriesPer100g: Number(food.caloriesPer100g) });
+    };
+    const handleFoodFound = async (food: any, amountG: number) => {
+        // Az étel már mentésre kerül a FoodSearchDialog-ban
+        // Csak frissítjük a listát
+        await mutate();
+    };
 
     // Kliens oldali rendezés a protein_desc esetén
     const sorted = useMemo(() => {
@@ -67,21 +82,28 @@ export default function FoodsPage() {
         setSortBy('name_asc');
     };
 
-    const handleAdd = (id: string) => {
-        // TODO: FoodSearchDialog / étkezés választó
-        console.log('Hozzáadás:', id);
-    };
+
 
     return (
         <Box component="section" aria-labelledby="foods-title">
             {/* Fejléc */}
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" component="h1" id="foods-title" fontWeight={700}>
-                    Élelmiszerek
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                    Keress az adatbázisban vagy adj hozzá ételt az étkezésedhez
-                </Typography>
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+                <Box>
+                    <Typography variant="h4" component="h1" id="foods-title" fontWeight={700}>
+                        Élelmiszerek
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Keress az adatbázisban vagy adj hozzá ételt az étkezésedhez
+                    </Typography>
+                </Box>
+                <Button
+                    variant="contained"
+                    startIcon={<SearchIcon />}
+                    onClick={() => setSearchDialogOpen(true)}
+                    sx={{ minHeight: 44 }}
+                >
+                    Új étel keresése
+                </Button>
             </Box>
 
             {/* Kereső sor */}
@@ -207,6 +229,18 @@ export default function FoodsPage() {
                     ))}
                 </Grid>
             )}
+            <AddFoodToMealDialog
+                open={Boolean(addDialogFood)}
+                onClose={() => setAddDialogFood(null)}
+                food={addDialogFood}
+            />
+            <FoodSearchDialog
+                open={searchDialogOpen}
+                onClose={() => setSearchDialogOpen(false)}
+                onSelect={handleFoodFound}
+                title="Új étel keresése"
+            />
         </Box>
+
     );
 }

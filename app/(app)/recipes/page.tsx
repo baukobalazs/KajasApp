@@ -20,6 +20,7 @@ import { useRecipes, useDeleteRecipe } from '@/lib/hooks/useApi';
 import RecipeCard from '@/components/recipe/RecipeCard';
 import EmptyState from '@/components/ui/EmptyState';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import AddRecipeToMealDialog from '@/components/food/AddRecipeToMealDialog';
 
 export default function RecipesPage() {
     const { data: recipes, isLoading, error, mutate } = useRecipes();
@@ -27,6 +28,7 @@ export default function RecipesPage() {
 
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [toast, setToast] = useState('');
+    const [addDialogRecipe, setAddDialogRecipe] = useState<{ id: string; name: string; totalCalories: number; totalWeight: number } | null>(null);
 
     const recipeToDelete = recipes?.find((r: any) => r.id === deleteId);
 
@@ -40,6 +42,21 @@ export default function RecipesPage() {
         } catch (err: any) {
             setToast(err.message || 'Hiba történt a törlés során');
         }
+    };
+    const calcRecipeWeight = (recipe: any) => {
+        return (recipe.ingredients || []).reduce((sum: number, ing: any) => {
+            return sum + Number(ing.amountG);
+        }, 0);
+    };
+
+    const handleAdd = (id: string) => {
+        const recipe = recipes?.find((r: any) => r.id === id);
+        if (recipe) setAddDialogRecipe({
+            id: recipe.id,
+            name: recipe.name,
+            totalCalories: calcRecipeCalories(recipe),
+            totalWeight: calcRecipeWeight(recipe),
+        });
     };
 
     // Kalória összesítés egy recepthez
@@ -104,6 +121,7 @@ export default function RecipesPage() {
                                 ingredientCount={recipe.ingredients?.length || 0}
                                 totalCalories={calcRecipeCalories(recipe)}
                                 onDelete={(id) => setDeleteId(id)}
+                                onAdd={handleAdd}
                             />
                         </Grid>
                     ))}
@@ -139,6 +157,11 @@ export default function RecipesPage() {
                 onClose={() => setToast('')}
                 message={toast}
                 aria-live="polite"
+            />
+            <AddRecipeToMealDialog
+                open={Boolean(addDialogRecipe)}
+                onClose={() => setAddDialogRecipe(null)}
+                recipe={addDialogRecipe}
             />
         </Box>
     );

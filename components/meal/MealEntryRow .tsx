@@ -8,6 +8,7 @@ import {
     Chip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useState, useEffect } from 'react';
 
 interface MealEntryRowProps {
     id: string;
@@ -32,6 +33,11 @@ export default function MealEntryRow({
     onDelete,
     onAmountChange,
 }: MealEntryRowProps) {
+    const [localAmount, setLocalAmount] = useState(String(amountG));
+
+    useEffect(() => {
+        setLocalAmount(String(amountG));
+    }, [amountG]);
     return (
         <Box
             sx={{
@@ -59,8 +65,16 @@ export default function MealEntryRow({
             {/* Gramm input */}
             <TextField
                 type="number"
-                value={amountG}
-                onChange={(e) => onAmountChange(id, Number(e.target.value))}
+                value={localAmount}
+                onChange={(e) => setLocalAmount(e.target.value)}
+                onBlur={() => {
+                    const num = Number(localAmount);
+                    if (num >= 1 && num <= 9999) {
+                        onAmountChange(id, num);
+                    } else {
+                        setLocalAmount(String(amountG));
+                    }
+                }}
                 size="small"
                 inputProps={{
                     min: 1,

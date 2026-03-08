@@ -112,6 +112,20 @@ export default function LogPage() {
         }, 0);
     }, 0);
 
+    const handleRecipeSelect = async (recipeId: string, amountG: number) => {
+        try {
+            await addEntry({
+                date,
+                type: activeMealType,
+                entry: { recipeId, amountG },
+            });
+            await mutate();
+            setToast('Recept sikeresen hozzáadva');
+        } catch (err: any) {
+            setToast(err.message || 'Hiba történt');
+        }
+    };
+
     if (isLoading) return <SkeletonLoader type="list" />;
 
     return (
@@ -187,6 +201,7 @@ export default function LogPage() {
                 open={searchOpen}
                 onClose={() => setSearchOpen(false)}
                 onSelect={handleFoodSelect}
+                onSelectRecipe={handleRecipeSelect}
                 title={`Étel hozzáadása — ${mealTypes.find(m => m.type === activeMealType)?.label || ''}`}
             />
 

@@ -14,7 +14,8 @@ import Link from 'next/link';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
-
+import { useRouter } from 'next/navigation';
+import AddIcon from '@mui/icons-material/Add';
 interface RecipeCardProps {
     id: string;
     name: string;
@@ -22,6 +23,7 @@ interface RecipeCardProps {
     ingredientCount: number;
     totalCalories: number;
     onDelete: (id: string) => void;
+    onAdd: (id: string) => void;
 }
 
 export default function RecipeCard({
@@ -31,7 +33,9 @@ export default function RecipeCard({
     ingredientCount,
     totalCalories,
     onDelete,
+    onAdd,
 }: RecipeCardProps) {
+    const router = useRouter();
     return (
         <Card
             sx={{
@@ -39,8 +43,11 @@ export default function RecipeCard({
                 display: 'flex',
                 flexDirection: 'column',
                 transition: 'box-shadow 0.2s',
+                cursor: 'pointer',
                 '&:hover': { boxShadow: 4 },
             }}
+            onClick={() => router.push(`/recipes/${id}`)}
+            aria-label={`${name} recept megtekintése`}
         >
             <CardContent sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
@@ -83,11 +90,24 @@ export default function RecipeCard({
 
             <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
                 <Tooltip title="Szerkesztés">
-                    <Link href={`/recipes/${id}`}>
+                    <Link href={`/recipes/${id}/edit`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <IconButton aria-label={`${name} szerkesztése`} size="small" color="primary" sx={{ minWidth: 44, minHeight: 44 }}>
                             <EditIcon fontSize="small" />
                         </IconButton>
                     </Link>
+                </Tooltip>
+                <Tooltip title="Hozzáadás étkezéshez">
+                    <IconButton
+                        onClick={(e) => { e.stopPropagation(); onAdd(id); }}
+                        aria-label={`${name} hozzáadása étkezéshez`}
+                        size="small"
+                        color="success"
+                        sx={{ minWidth: 44, minHeight: 44 }}
+                    >
+                        <AddIcon fontSize="small" />
+                    </IconButton>
                 </Tooltip>
                 <Tooltip title="Törlés">
                     <IconButton

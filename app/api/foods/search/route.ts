@@ -17,8 +17,7 @@ export async function GET(req: NextRequest) {
         }
 
         const response = await fetch(
-            `${process.env.OPENFOODFACTS_URL}/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10&fields=id,product_name,nutriments`,
-            { next: { revalidate: 3600 } }
+            `${process.env.OPENFOODFACTS_URL}/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=25&fields=id,product_name,nutriments`, { next: { revalidate: 3600 } }
         );
 
         if (!response.ok) {

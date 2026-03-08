@@ -29,7 +29,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon /> },
+    { label: 'Főoldal', href: '/dashboard', icon: <DashboardIcon /> },
     { label: 'Napló', href: '/log', icon: <MenuBookIcon /> },
     { label: 'Ételek', href: '/foods', icon: <SearchIcon /> },
     { label: 'Receptek', href: '/recipes', icon: <BookmarkIcon /> },
