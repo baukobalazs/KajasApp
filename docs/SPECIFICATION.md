@@ -55,7 +55,7 @@ A **KajasApp** egy táplálkozás követő webalkalmazás, amely segít a felhas
 ### Technológiai döntések
 | Réteg | Technológia | Indoklás |
 |-------|-------------|----------|
-| Frontend + Backend | Next.js 14 (App Router) | Full-stack React framework, szerver komponensek, API routes egy helyen |
+| Frontend + Backend | Next.js 15 (App Router) | Full-stack React framework, szerver komponensek, API routes egy helyen |
 | Adatbázis | Neon (Serverless PostgreSQL) | Skálázható, Vercel-lel natívan integrálódik, SQL alapú |
 | ORM | Drizzle ORM | Típusbiztos, lightweight, jól illeszkedik Next.js-hez |
 | UI könyvtár | MUI Material | Beépített akadálymentesség, reszponzív komponensek, theme rendszer |

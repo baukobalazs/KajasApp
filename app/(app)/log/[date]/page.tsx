@@ -28,7 +28,6 @@ const mealTypes = [
 ];
 
 export default function LogPage() {
-    const params = useRouter();
     const { date } = useParams<{ date: string }>();
     const router = useRouter();
 

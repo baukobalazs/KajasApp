@@ -12,7 +12,7 @@ import { useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import MealEntryRow from './MealEntryRow ';
+import MealEntryRow from './MealEntryRow';
 
 
 export interface MealEntry {
