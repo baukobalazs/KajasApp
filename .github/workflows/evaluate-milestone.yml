@@ -5,9 +5,9 @@ name: "Mérföldkő értékelés"
 
 on:
   schedule:
-    - cron: "0 23 30 3 *"
-    - cron: "0 22 27 4 *"
-    - cron: "0 22 11 5 *"
+    - cron: "0 22 29 3 *"
+    - cron: "0 22 26 4 *"
+    - cron: "0 22 10 5 *"
   workflow_dispatch:
     inputs:
       milestone:
