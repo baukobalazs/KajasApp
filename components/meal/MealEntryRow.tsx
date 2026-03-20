@@ -43,11 +43,16 @@ export default function MealEntryRow({
             sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
+                gap: 1.5,
                 py: 1.5,
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                transition: 'background-color 0.15s',
+                mx: -1.5,
+                px: 1.5,
+                borderRadius: 1,
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.015)' },
             }}
         >
             {/* Étel neve */}
@@ -56,9 +61,9 @@ export default function MealEntryRow({
                     {name}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                    <Chip label={`F: ${protein}g`} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
-                    <Chip label={`Sz: ${carbs}g`} size="small" color="secondary" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
-                    <Chip label={`Zs: ${fat}g`} size="small" color="warning" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+                    <Chip label={`F: ${protein}g`} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.65rem', height: 22, borderRadius: '6px' }} />
+                    <Chip label={`Sz: ${carbs}g`} size="small" color="secondary" variant="outlined" sx={{ fontSize: '0.65rem', height: 22, borderRadius: '6px' }} />
+                    <Chip label={`Zs: ${fat}g`} size="small" color="warning" variant="outlined" sx={{ fontSize: '0.65rem', height: 22, borderRadius: '6px' }} />
                 </Box>
             </Box>
 

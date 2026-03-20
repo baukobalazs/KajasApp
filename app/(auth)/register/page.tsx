@@ -69,9 +69,9 @@ export default function RegisterPage() {
     };
 
     return (
-        <Card>
+        <Card sx={{ boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
             <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-                <Typography variant="h5" fontWeight={700} gutterBottom>
+                <Typography variant="h5" fontWeight={800} gutterBottom>
                     Regisztráció
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>

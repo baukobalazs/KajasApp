@@ -166,11 +166,11 @@ export default function ProfilePage() {
 
     return (
         <Box component="section" aria-labelledby="profile-title">
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" component="h1" id="profile-title" fontWeight={700}>
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h4" component="h1" id="profile-title" fontWeight={800}>
                     Profilom
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
                     {session?.user?.email}
                 </Typography>
             </Box>
@@ -179,9 +179,18 @@ export default function ProfilePage() {
                 {/* Személyes adatok */}
                 <Card>
                     <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <FitnessCenterIcon color="primary" aria-hidden="true" />
-                            <Typography variant="h6" fontWeight={600}>Személyes adatok</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+                            <Box
+                                sx={{
+                                    width: 36, height: 36,
+                                    borderRadius: '10px',
+                                    bgcolor: 'rgba(46,125,50,0.08)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}
+                            >
+                                <FitnessCenterIcon sx={{ color: 'primary.main', fontSize: 20 }} aria-hidden="true" />
+                            </Box>
+                            <Typography variant="h6" fontWeight={700}>Személyes adatok</Typography>
                         </Box>
                         <Stack spacing={2}>
                             <TextField

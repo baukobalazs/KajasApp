@@ -89,7 +89,7 @@ export default function FoodsPage() {
             {/* Fejléc */}
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
                 <Box>
-                    <Typography variant="h4" component="h1" id="foods-title" fontWeight={700}>
+                    <Typography variant="h4" component="h1" id="foods-title" fontWeight={800}>
                         Élelmiszerek
                     </Typography>
                     <Typography variant="body1" color="text.secondary">

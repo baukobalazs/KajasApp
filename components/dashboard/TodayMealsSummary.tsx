@@ -41,8 +41,8 @@ export default function TodayMealsSummary({ meals, date }: TodayMealsSummaryProp
     return (
         <Card>
             <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" fontWeight={600}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
+                    <Typography variant="h6" fontWeight={700}>
                         Mai étkezések
                     </Typography>
                     <Link href={`/log/${date}`}>
@@ -64,8 +64,21 @@ export default function TodayMealsSummary({ meals, date }: TodayMealsSummaryProp
                         role="status"
                         aria-live="polite"
                     >
-                        <RestaurantIcon sx={{ fontSize: 48, mb: 1, opacity: 0.4 }} />
-                        <Typography variant="body2">Még nincs rögzített étkezés ma</Typography>
+                        <Box
+                            sx={{
+                                width: 72,
+                                height: 72,
+                                borderRadius: '50%',
+                                bgcolor: 'rgba(0,0,0,0.04)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 1.5,
+                            }}
+                        >
+                            <RestaurantIcon sx={{ fontSize: 36, opacity: 0.35 }} />
+                        </Box>
+                        <Typography variant="body2" fontWeight={500}>Még nincs rögzített étkezés ma</Typography>
                         <Link href={`/log/${date}`}>
                             <Button variant="contained" size="small" sx={{ mt: 2 }}>
                                 Étkezés hozzáadása

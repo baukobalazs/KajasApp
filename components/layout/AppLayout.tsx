@@ -2,7 +2,6 @@
 
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import Navbar from './Navbar';
-import { useEffect, useState } from 'react';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -10,11 +9,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
     const theme = useTheme();
-
-    const [isMobile, setIsMobile] = useState(false);
-    useEffect(() => {
-        setIsMobile(window.innerWidth < 600);
-    }, []);
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
         <Box
@@ -46,8 +41,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     e.currentTarget.style.padding = '8px 16px';
                     e.currentTarget.style.background = '#2E7D32';
                     e.currentTarget.style.color = '#fff';
-                    e.currentTarget.style.borderRadius = '4px';
+                    e.currentTarget.style.borderRadius = '8px';
                     e.currentTarget.style.textDecoration = 'none';
+                    e.currentTarget.style.fontWeight = '600';
                 }}
                 onBlur={(e) => {
                     e.currentTarget.style.left = '-9999px';
@@ -65,16 +61,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 id="main-content"
                 component="main"
                 tabIndex={-1}
-                suppressHydrationWarning
                 sx={{
                     flexGrow: 1,
-                    px: { xs: 2, sm: 3, md: 4 },       // reszponzív padding
+                    px: { xs: 2, sm: 3, md: 4 },
                     py: { xs: 2, sm: 3 },
-                    // Mobilon helyet hagyunk az alsó navigációnak
-                    pb: isMobile ? '72px' : undefined,
+                    pb: isMobile ? '80px' : { xs: 3, sm: 4 },
                     maxWidth: 1200,
                     width: '100%',
-                    mx: 'auto',                          // középre igazítás
+                    mx: 'auto',
                 }}
             >
                 {children}

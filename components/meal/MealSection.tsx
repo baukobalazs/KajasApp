@@ -35,10 +35,10 @@ interface MealSectionProps {
 }
 
 const mealColors = {
-    breakfast: '#FF8F00',
-    lunch: '#2E7D32',
-    dinner: '#1565C0',
-    snack: '#6A1B9A',
+    breakfast: { dot: '#FF8F00', bg: 'rgba(255,143,0,0.06)' },
+    lunch: { dot: '#2E7D32', bg: 'rgba(46,125,50,0.06)' },
+    dinner: { dot: '#1565C0', bg: 'rgba(21,101,192,0.06)' },
+    snack: { dot: '#6A1B9A', bg: 'rgba(106,27,154,0.06)' },
 };
 
 function calcNutrition(entry: MealEntry) {
@@ -64,7 +64,7 @@ export default function MealSection({
     const totalCalories = entries.reduce((sum, e) => sum + calcNutrition(e).calories, 0);
 
     return (
-        <Card>
+        <Card sx={{ bgcolor: mealColors[type].bg, borderColor: `${mealColors[type].dot}20` }}>
             <CardContent sx={{ pb: '16px !important' }}>
                 {/* Fejléc */}
                 <Box
@@ -75,21 +75,22 @@ export default function MealSection({
                         mb: expanded ? 2 : 0,
                     }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Box
                             sx={{
-                                width: 12,
-                                height: 12,
+                                width: 10,
+                                height: 10,
                                 borderRadius: '50%',
-                                bgcolor: mealColors[type],
+                                bgcolor: mealColors[type].dot,
                                 flexShrink: 0,
+                                boxShadow: `0 0 0 3px ${mealColors[type].dot}30`,
                             }}
                             aria-hidden="true"
                         />
-                        <Typography variant="h6" component="h2" fontWeight={600}>
+                        <Typography variant="h6" component="h2" fontWeight={700}>
                             {label}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" fontWeight={500}>
                             {totalCalories} kcal
                         </Typography>
                     </Box>

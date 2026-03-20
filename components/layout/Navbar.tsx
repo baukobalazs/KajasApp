@@ -86,7 +86,7 @@ export default function Navbar() {
                     bgcolor: 'background.paper',
                 }}
             >
-                <BottomNavigation value={getActiveIndex()} showLabels>
+                <BottomNavigation value={getActiveIndex()} showLabels sx={{ bgcolor: 'transparent' }}>
                     {navItems.map((item, index) => (
                         <BottomNavigationAction
                             key={item.href}
@@ -98,6 +98,8 @@ export default function Navbar() {
                             aria-label={item.label}
                             sx={{
                                 minWidth: 44,
+                                py: 1,
+                                transition: 'color 0.2s',
                                 '&.Mui-selected': { color: 'primary.main' },
                             }}
                         />
@@ -114,7 +116,12 @@ export default function Navbar() {
                 position="fixed"
                 color="inherit"
                 component="header"
-                sx={{ bgcolor: 'background.paper' }}
+                sx={{
+                    bgcolor: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(16px)',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                }}
             >
                 <Toolbar>
                     {/* Logo */}
@@ -137,7 +144,7 @@ export default function Navbar() {
                     <Box
                         component="nav"
                         aria-label="Főnavigáció"
-                        sx={{ display: 'flex', gap: 1, flexGrow: 1 }}
+                        sx={{ display: 'flex', gap: 0.5, flexGrow: 1 }}
                     >
                         {navItems.map((item) => {
                             const href = item.href === '/log' ? `/log/${today}` : item.href;
@@ -155,19 +162,19 @@ export default function Navbar() {
                                     sx={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: 0.5,
+                                        gap: 0.75,
                                         px: 2,
                                         py: 1,
-                                        borderRadius: 2,
+                                        borderRadius: 2.5,
                                         textDecoration: 'none',
                                         color: isActive ? 'primary.main' : 'text.secondary',
-                                        bgcolor: isActive ? 'primary.light' + '20' : 'transparent',
-                                        fontWeight: isActive ? 600 : 400,
-                                        fontSize: '0.9rem',
+                                        bgcolor: isActive ? 'rgba(46,125,50,0.08)' : 'transparent',
+                                        fontWeight: isActive ? 600 : 500,
+                                        fontSize: '0.875rem',
                                         minHeight: 44,
-                                        transition: 'all 0.15s',
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                                         '&:hover': {
-                                            bgcolor: 'action.hover',
+                                            bgcolor: isActive ? 'rgba(46,125,50,0.12)' : 'rgba(0,0,0,0.04)',
                                             color: 'primary.main',
                                         },
                                         '&:focus-visible': {

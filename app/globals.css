@@ -17,12 +17,12 @@
   --color-warning:            #F57F17;
   --color-success:            #2E7D32;
 
-  --color-bg-default:         #F5F5F5;
+  --color-bg-default:         #F8F9FA;
   --color-bg-paper:           #FFFFFF;
 
-  --color-text-primary:       #1A1A1A;
-  --color-text-secondary:     #616161;
-  --color-divider:            #E0E0E0;
+  --color-text-primary:       #1A1A2E;
+  --color-text-secondary:     #5F6368;
+  --color-divider:            #E8EAED;
 
   /* ── Tipográfia ── */
   --font-family:              'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
@@ -57,16 +57,18 @@
   --spacing-12:               3rem;       /* 48px */
 
   /* ── Border radius ── */
-  --radius-sm:                4px;
-  --radius-md:                8px;
-  --radius-lg:                12px;
-  --radius-xl:                16px;
+  --radius-sm:                6px;
+  --radius-md:                10px;
+  --radius-lg:                16px;
+  --radius-xl:                20px;
+  --radius-2xl:               24px;
   --radius-full:              9999px;
 
   /* ── Árnyékok ── */
-  --shadow-sm:                0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md:                0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.04);
-  --shadow-lg:                0 4px 16px rgba(0, 0, 0, 0.10), 0 8px 32px rgba(0, 0, 0, 0.06);
+  --shadow-sm:                0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:                0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-lg:                0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl:                0 24px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
 
   /* ── Breakpointok (referencia, media query-kben használd) ── */
   --breakpoint-xs:            0px;
@@ -81,8 +83,9 @@
   --z-index-toast:            1400;
 
   /* ── Transition ── */
-  --transition-fast:          0.15s ease;
-  --transition-normal:        0.25s ease;
+  --transition-fast:          0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal:        0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:          0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Alap stílusok ─────────────────────────────────────────── */
@@ -147,3 +150,30 @@ h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: var(--font-weight-bol
 h2 { font-size: clamp(1.5rem,  3vw, 1.875rem); font-weight: var(--font-weight-bold); }
 h3 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: var(--font-weight-semibold); }
 h4 { font-size: clamp(1.1rem,  2vw,  1.25rem); font-weight: var(--font-weight-semibold); }
+
+/* ── Selection stílus ────────────────────────────────── */
+
+::selection {
+  background-color: rgba(46, 125, 50, 0.15);
+  color: var(--color-text-primary);
+}
+
+/* ── Scrollbar stílus ────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}

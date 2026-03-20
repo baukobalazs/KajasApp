@@ -76,11 +76,11 @@ export default function DashboardPage() {
     return (
         <Box component="section" aria-labelledby="dashboard-title">
             {/* Fejléc */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 4 }}>
                 <Typography variant="h4" component="h1" id="dashboard-title" fontWeight={700}>
                     Szia, {session?.user?.name || 'Felhasználó'}! 👋
                 </Typography>
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
                     {new Date().toLocaleDateString('hu-HU', {
                         weekday: 'long',
                         year: 'numeric',
@@ -95,33 +95,56 @@ export default function DashboardPage() {
                 <Grid size={12}>
                     <Box
                         sx={{
-                            p: 3,
-                            borderRadius: 3,
-                            bgcolor: 'primary.main',
+                            p: { xs: 3, sm: 4 },
+                            borderRadius: 4,
+                            background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 50%, #004D40 100%)',
                             color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '\"\"',
+                                position: 'absolute',
+                                top: -60,
+                                right: -60,
+                                width: 200,
+                                height: 200,
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.06)',
+                            },
+                            '&::after': {
+                                content: '\"\"',
+                                position: 'absolute',
+                                bottom: -40,
+                                left: '30%',
+                                width: 150,
+                                height: 150,
+                                borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.04)',
+                            },
                         }}
                         role="region"
                         aria-label="Napi kalória összesítő"
                     >
-                        <Typography variant="body2" sx={{ opacity: 0.85, mb: 0.5 }}>
+                        <Typography variant="body2" sx={{ opacity: 0.8, mb: 0.5, fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '0.75rem' }}>
                             Napi kalóriabevitel
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 2 }}>
-                            <Typography variant="h3" fontWeight={700}>
+                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 2.5 }}>
+                            <Typography sx={{ fontSize: { xs: '2.5rem', sm: '3rem' }, fontWeight: 800, lineHeight: 1 }}>
                                 {totals.calories}
                             </Typography>
-                            <Typography variant="h6" sx={{ opacity: 0.75 }}>
+                            <Typography variant="h6" sx={{ opacity: 0.6, fontWeight: 400 }}>
                                 / {calorieGoal} kcal
                             </Typography>
                         </Box>
 
                         <Box
                             sx={{
-                                height: 12,
-                                borderRadius: 6,
-                                bgcolor: 'rgba(255,255,255,0.25)',
+                                height: 10,
+                                borderRadius: 5,
+                                bgcolor: 'rgba(255,255,255,0.15)',
                                 overflow: 'hidden',
-                                mb: 1,
+                                mb: 1.5,
+                                position: 'relative',
                             }}
                             role="progressbar"
                             aria-valuenow={caloriePercentage}
@@ -133,16 +156,21 @@ export default function DashboardPage() {
                                 sx={{
                                     height: '100%',
                                     width: `${caloriePercentage}%`,
-                                    bgcolor: 'white',
-                                    borderRadius: 6,
-                                    transition: 'width 0.4s ease',
+                                    background: 'linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,1) 100%)',
+                                    borderRadius: 5,
+                                    transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                                 }}
                             />
                         </Box>
 
-                        <Typography variant="body2" sx={{ opacity: 0.85 }}>
-                            Még {remaining} kcal maradt a célodból
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                Még <strong>{remaining} kcal</strong> maradt a célodból
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.6, fontWeight: 600 }}>
+                                {caloriePercentage}%
+                            </Typography>
+                        </Box>
                     </Box>
                 </Grid>
 

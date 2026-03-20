@@ -38,8 +38,11 @@ export default function FoodCard({
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                transition: 'box-shadow 0.2s',
-                '&:hover': { boxShadow: 4 },
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+                },
             }}
         >
             <CardContent sx={{ flexGrow: 1 }}>

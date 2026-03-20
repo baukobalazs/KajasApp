@@ -131,12 +131,12 @@ export default function LogPage() {
         <Box component="section" aria-labelledby="log-title">
             {/* Fejléc + dátum navigáció */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <IconButton onClick={() => navigateDate('prev')} aria-label="Előző nap" sx={{ minWidth: 44, minHeight: 44 }}>
                         <ArrowBackIosIcon fontSize="small" />
                     </IconButton>
 
-                    <Box>
+                    <Box sx={{ textAlign: 'center', minWidth: 180 }}>
                         <Typography variant="h5" component="h1" id="log-title" fontWeight={700}>
                             {isToday ? 'Ma' : formattedDate}
                         </Typography>
@@ -156,9 +156,18 @@ export default function LogPage() {
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body1" fontWeight={600} color="primary.main">
-                        {totalCalories} kcal összesen
-                    </Typography>
+                    <Box
+                        sx={{
+                            px: 2, py: 0.75,
+                            borderRadius: 2,
+                            background: 'linear-gradient(135deg, #2E7D32, #1B5E20)',
+                            color: '#fff',
+                        }}
+                    >
+                        <Typography variant="body2" fontWeight={700}>
+                            {totalCalories} kcal
+                        </Typography>
+                    </Box>
                     {!isToday && (
                         <Button
                             startIcon={<TodayIcon />}

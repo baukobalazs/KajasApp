@@ -1,39 +1,47 @@
 'use client';
 
-import { createTheme } from '@mui/material/styles';
+import { createTheme, alpha } from '@mui/material/styles';
 
 const theme = createTheme({
     // ── Színrendszer ──────────────────────────────────────────────
     palette: {
         primary: {
-            light: '#60ad5e',
+            light: '#66BB6A',
             main: '#2E7D32',   // Zöld — egészség, táplálkozás
-            dark: '#005005',
+            dark: '#1B5E20',
             contrastText: '#ffffff',
         },
         secondary: {
-            light: '#ffc046',
+            light: '#FFB74D',
             main: '#FF8F00',   // Narancs — kalória, energia
-            dark: '#c56000',
+            dark: '#E65100',
             contrastText: '#000000',
         },
         error: {
+            light: '#EF5350',
             main: '#C62828',
         },
         warning: {
+            light: '#FFD54F',
             main: '#F57F17',
         },
         success: {
+            light: '#66BB6A',
             main: '#2E7D32',
         },
+        info: {
+            light: '#4FC3F7',
+            main: '#0288D1',
+        },
         background: {
-            default: '#F5F5F5',
+            default: '#F8F9FA',
             paper: '#FFFFFF',
         },
         text: {
-            primary: '#1A1A1A',
-            secondary: '#616161',
+            primary: '#1A1A2E',
+            secondary: '#5F6368',
         },
+        divider: '#E8EAED',
     },
 
     // ── Tipográfia ────────────────────────────────────────────────
@@ -99,7 +107,7 @@ const theme = createTheme({
 
     // ── Alakzatok (border-radius tokenek) ─────────────────────────
     shape: {
-        borderRadius: 8,
+        borderRadius: 12,
     },
 
     // ── Komponens szintű overrides ────────────────────────────────
@@ -108,12 +116,25 @@ const theme = createTheme({
         MuiButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 8,
-                    textTransform: 'none',   // Ne legyen csupa nagybetű
+                    borderRadius: 10,
+                    textTransform: 'none',
                     fontWeight: 600,
-                    minHeight: 44,           // Touch-barát méret (44x44px)
+                    minHeight: 44,
                     paddingLeft: 20,
                     paddingRight: 20,
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                },
+                contained: {
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)',
+                    '&:hover': {
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1)',
+                        transform: 'translateY(-1px)',
+                    },
+                },
+                outlined: {
+                    '&:hover': {
+                        transform: 'translateY(-1px)',
+                    },
                 },
             },
             defaultProps: {
@@ -127,6 +148,7 @@ const theme = createTheme({
                 root: {
                     minWidth: 44,
                     minHeight: 44,
+                    transition: 'all 0.2s ease',
                 },
             },
         },
@@ -135,8 +157,15 @@ const theme = createTheme({
         MuiCard: {
             styleOverrides: {
                 root: {
-                    borderRadius: 12,
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.08), 0 2px 12px rgba(0,0,0,0.04)',
+                    borderRadius: 16,
+                    border: '1px solid',
+                    borderColor: '#E8EAED',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+                        borderColor: '#D1D5DB',
+                    },
                 },
             },
         },
@@ -150,8 +179,14 @@ const theme = createTheme({
             styleOverrides: {
                 root: {
                     '& .MuiOutlinedInput-root': {
-                        borderRadius: 8,
+                        borderRadius: 10,
                         minHeight: 44,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#2E7D32',
+                            },
+                        },
                     },
                 },
             },
@@ -161,7 +196,7 @@ const theme = createTheme({
         MuiChip: {
             styleOverrides: {
                 root: {
-                    borderRadius: 6,
+                    borderRadius: 8,
                     fontWeight: 600,
                     fontSize: '0.75rem',
                 },
@@ -172,7 +207,8 @@ const theme = createTheme({
         MuiDialog: {
             styleOverrides: {
                 paper: {
-                    borderRadius: 16,
+                    borderRadius: 20,
+                    boxShadow: '0 24px 48px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08)',
                 },
             },
         },
@@ -184,7 +220,19 @@ const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    borderBottom: '1px solid #E0E0E0',
+                    borderBottom: '1px solid #E8EAED',
+                    backdropFilter: 'blur(12px)',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                },
+            },
+        },
+
+        // LinearProgress
+        MuiLinearProgress: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 8,
+                    height: 8,
                 },
             },
         },
@@ -193,8 +241,17 @@ const theme = createTheme({
         MuiListItemButton: {
             styleOverrides: {
                 root: {
-                    borderRadius: 8,
+                    borderRadius: 10,
                     minHeight: 44,
+                },
+            },
+        },
+
+        // Alert
+        MuiAlert: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 12,
                 },
             },
         },
@@ -203,6 +260,37 @@ const theme = createTheme({
         MuiButtonBase: {
             defaultProps: {
                 disableRipple: false,
+            },
+        },
+
+        // Snackbar
+        MuiSnackbar: {
+            defaultProps: {
+                anchorOrigin: { vertical: 'bottom', horizontal: 'center' },
+            },
+        },
+
+        // ToggleButton
+        MuiToggleButton: {
+            styleOverrides: {
+                root: {
+                    borderRadius: 10,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                },
+            },
+        },
+
+        // TableCell
+        MuiTableCell: {
+            styleOverrides: {
+                head: {
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    color: '#5F6368',
+                },
             },
         },
     },
