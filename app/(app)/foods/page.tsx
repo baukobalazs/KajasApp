@@ -215,7 +215,7 @@ export default function FoodsPage() {
             ) : (
                 <Grid container spacing={2}>
                     {sorted.map((food: any) => (
-                        <Grid key={food.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                        <Grid key={food.id} item xs={12} sm={6} md={4} lg={3}>
                             <FoodCard
                                 id={food.id}
                                 name={food.name}

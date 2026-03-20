@@ -25,7 +25,7 @@ export default function SkeletonLoader({ type }: SkeletonLoaderProps) {
         return (
             <Grid container spacing={2}>
                 {[...Array(6)].map((_, i) => (
-                    <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid key={i} item xs={12} sm={6} md={4}>
                         <Skeleton variant="rounded" height={170} sx={skeletonSx} animation="wave" />
                     </Grid>
                 ))}

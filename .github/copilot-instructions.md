@@ -7,7 +7,7 @@ Hungarian UI language throughout the entire application.
 ## Tech Stack
 - **Next.js 15** (App Router)
 - **TypeScript**
-- **MUI (Material UI v7)**
+- **MUI (Material UI v6)**
 - **Drizzle ORM** + **Neon PostgreSQL**
 - **NextAuth v4** — credentials-based authentication
 - **SWR** — data fetching and caching
@@ -15,7 +15,7 @@ Hungarian UI language throughout the entire application.
 - **OpenFoodFacts API** — food database
 
 ## Critical Breaking Changes (always apply these)
-- MUI Grid v7: use `size` prop instead of `item`/`xs`/`sm`
+- MUI Grid v6: use `item` with `xs`/`sm`/`md`/`lg` props (do not use `size`)
 - Next.js 15: `params` and `searchParams` are Promise-wrapped → always `await params`
 - Zod v4: use `.issues` not `.errors`
 - Always use `pnpm`, never `npm` or `yarn`

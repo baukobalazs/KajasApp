@@ -6,7 +6,7 @@ Személyes táplálkozás követő webalkalmazás, amely lehetővé teszi az ét
 
 - **Next.js 15** — App Router, szerver és kliens komponensek
 - **TypeScript** — típusbiztos fejlesztés
-- **MUI (Material UI v7)** — UI komponens könyvtár
+- **MUI (Material UI v6)** — UI komponens könyvtár
 - **Drizzle ORM** — adatbázis séma és lekérdezések
 - **Neon** — PostgreSQL adatbázis (serverless)
 - **NextAuth v4** — autentikáció
@@ -134,4 +134,57 @@ pnpm test:watch
 
 ## Deploy
 
+Publikus URL: https://kajas-app.vercel.app/
+
 Az alkalmazás Vercelen van deployolva. A `main` branch-re pusholt változások automatikusan deployolódnak.
+
+### Production környezeti változók
+
+A működéshez szükséges környezeti változók Vercel Project Settings alatt vannak beállítva.
+
+Kötelező változók:
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+
+További (Neon által biztosított) változók:
+- `PGDATABASE`
+- `PGPASSWORD`
+- `POSTGRES_HOST`
+- `POSTGRES_URL_NO_SSL`
+- `DATABASE_URL_UNPOOLED`
+- `POSTGRES_USER`
+- `PGHOST_UNPOOLED`
+- `POSTGRES_PRISMA_URL`
+
+Opcionális:
+- `OPENFOODFACTS_URL`
+
+### Production ellenorzes
+
+Lokalisan ellenorizheto, hogy a production build sikeres:
+
+```bash
+pnpm install
+pnpm build
+pnpm start
+```
+
+Build + runtime ellenorzes utan az alkalmazas elerheto a publikus URL-en is.
+
+## Biztonsagi modell (szerver oldalon)
+
+Ez a projekt nem Firestore/Supabase Rules alapu rendszert hasznal, hanem sajat Next.js API + PostgreSQL architekturat.
+
+- Route vedelmek: `middleware.ts` (`withAuth`) csak bejelentkezett felhasznalot enged a vedett oldalakra.
+- API hitelesites: minden vedett API route `getServerSession(authOptions)` ellenorzessel indul.
+- Szerepkor ellenorzes: admin endpointok `session.user.role === 'admin'` feltetelt hasznalnak.
+- Tulajdonosi ellenorzes: user-specifikus eroforrasok `session.user.id` alapjan szurve vannak.
+- Input validacio: API szinten Zod schema validacio (`safeParse`) fut.
+
+Peldak:
+- `middleware.ts`
+- `app/api/foods/route.ts`
+- `app/api/foods/[id]/route.ts`
+- `app/api/meals/route.ts`
+- `app/api/recipes/route.ts`

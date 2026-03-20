@@ -114,3 +114,51 @@ A **KajasApp** egy táplálkozás követő webalkalmazás, amely segít a felhas
 - Bejelentkezett felhasználóknak: felső navbar (desktop) / alsó tab bar (mobil)
 - Publikus oldalakról automatikus átirányítás a dashboardra bejelentkezés után
 - Védett oldalakról átirányítás a login oldalra, ha nincs aktív session
+
+---
+
+## Szerver oldali biztonsági architektúra
+
+Ez a projekt nem BaaS Rules (Firestore/Supabase RLS policy file) alapú megoldást használ, hanem egyedi Next.js API réteget PostgreSQL adatbázissal.
+
+### Védelmi rétegek
+- Route guard middleware: `middleware.ts` (`withAuth`) védi a `/dashboard`, `/log`, `/foods`, `/recipes`, `/profile`, `/admin` útvonalakat.
+- API hitelesítés: védett route-ok `getServerSession(authOptions)` ellenőrzést végeznek.
+- RBAC (role-based access control): admin műveletek `session.user.role === 'admin'` feltételhez kötöttek.
+- Tulajdonosi ellenőrzés: userhez kötött adatok `session.user.id` alapján szűrtek API lekérdezésekben.
+- Input validáció: szerver oldalon Zod (`safeParse`) fut minden kritikus POST/PUT/PATCH kérés előtt.
+
+### Referencia fájlok
+- `middleware.ts`
+- `app/api/foods/route.ts`
+- `app/api/foods/[id]/route.ts`
+- `app/api/meals/route.ts`
+- `app/api/meals/entries/[id]/route.ts`
+- `app/api/recipes/route.ts`
+- `app/api/recipes/[id]/route.ts`
+- `app/api/profile/route.ts`
+
+---
+
+## Deploy és production működés
+
+- Publikus URL: https://kajas-app.vercel.app/
+- Platform: Vercel (CI/CD automatikus deploy `main` branch push esetén)
+- Adatbázis: Neon PostgreSQL
+
+### Szükséges production környezeti változók
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+- Neon által biztosított Postgres kapcsolódó változók
+
+### Production ellenőrzés
+Az alkalmazás production működése lokálisan is validálható:
+
+```bash
+pnpm install
+pnpm build
+pnpm start
+```
+
+Sikeres build esetén a projekt Vercel kompatibilis és deployolható.

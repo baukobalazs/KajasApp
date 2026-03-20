@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
             <Grid container spacing={3}>
                 {/* Kalória összesítő */}
-                <Grid size={12}>
+                <Grid item xs={12}>
                     <Box
                         sx={{
                             p: { xs: 3, sm: 4 },
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Makró kártyák */}
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <MacroProgressCard
                         label="Fehérje"
                         current={totals.protein}
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                         color="primary"
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <MacroProgressCard
                         label="Szénhidrát"
                         current={totals.carbs}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                         color="secondary"
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid item xs={12} sm={4}>
                     <MacroProgressCard
                         label="Zsír"
                         current={totals.fat}
@@ -204,7 +204,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Mai étkezések */}
-                <Grid size={12}>
+                <Grid item xs={12}>
                     <TodayMealsSummary meals={mealSummaries} date={today} />
                 </Grid>
             </Grid>
